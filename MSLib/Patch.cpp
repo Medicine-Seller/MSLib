@@ -42,7 +42,7 @@ BOOL ms::SPatch::Attach(STOP_CONDITION stopCondition)
 		for (size_t i = 0; i < vAddrResults.size(); i++)
 		{
 			vScannedPatternAddrs.push_back(vAddrResults[i]);
-			vScannedPatternAddrs[i] += dwOffset; //Possible Error
+			vScannedPatternAddrs[i] = reinterpret_cast<uintptr_t*>(reinterpret_cast<BYTE*>(vScannedPatternAddrs[i]) + dwOffset); 
 		}
 		bPatternFound = TRUE;
 	}

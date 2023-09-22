@@ -55,7 +55,7 @@ std::vector<uintptr_t*> ms::AobScan(std::vector<BYTE>& vSig, std::vector<CHAR>& 
 	MEMORY_BASIC_INFORMATION mbi;
 	std::vector<uintptr_t*> vAddrResults;
 
-	for (uintptr_t* pulRegion = ulModuleBase; pulRegion < ulModuleBase + ulModuleSize; pulRegion += mbi.RegionSize)
+	for (uintptr_t* pulRegion = ulModuleBase; pulRegion < ulModuleBase + ulModuleSize; pulRegion = reinterpret_cast<uintptr_t*>(reinterpret_cast<BYTE*>(pulRegion) + mbi.RegionSize))
 	{
 		if (!VirtualQuery(pulRegion, &mbi, sizeof(mbi)) || mbi.State != MEM_COMMIT || mbi.Protect == PAGE_NOACCESS)
 			continue;
