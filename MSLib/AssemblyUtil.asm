@@ -1,61 +1,102 @@
-EXTERN registersx64:QWORD
+EXTERNDEF SaveRegisters:PROC
+EXTERNDEF ClearRegisters:PROC
+EXTERNDEF RestoreRegisters:PROC
+EXTERNDEF g_x64Registers:QWORD
 
 .data
 	Temp QWORD 0
-
+    g_x64Registers QWORD 48*8 dup (0)
 .code
 
 SaveRegisters PROC
     mov Temp,rax
     pushfq                      ;Push flags on stack
-    pop rax                     ;Pop flags off stack
-    mov registersx64[0*8],rax   ;Store flags
+    pop rax                     ;Pop flags off stack into rax
+    mov g_x64Registers[0*8],rax         ;Store flags
     mov rax,Temp
 
-    mov registersx64[1*8],rsp    
-    add registersx64[1*8],8     ;Remove Caller Return
+    mov g_x64Registers[1*8],rsp    
+    add g_x64Registers[1*8],8           ;Remove Caller Return
 
-    mov registersx64[2*8],rax
-    mov registersx64[3*8],rbx
-    mov registersx64[4*8],rcx
-    mov registersx64[5*8],rdx
-    mov registersx64[6*8],rsi
-    mov registersx64[7*8],rdi
-    mov registersx64[8*8],rbp
-    mov registersx64[9*8],r8
-    mov registersx64[10*8],r9
-    mov registersx64[11*8],r10
-    mov registersx64[12*8],r11
-    mov registersx64[13*8],r12
-    mov registersx64[14*8],r13
-    mov registersx64[15*8],r14
-    mov registersx64[16*8],r15
+    mov g_x64Registers[2*8],rax         ;Save registers
+    mov g_x64Registers[3*8],rbx
+    mov g_x64Registers[4*8],rcx
+    mov g_x64Registers[5*8],rdx
+    mov g_x64Registers[6*8],rsi
+    mov g_x64Registers[7*8],rdi
+    mov g_x64Registers[8*8],rbp
+    mov g_x64Registers[9*8],r8
+    mov g_x64Registers[10*8],r9
+    mov g_x64Registers[11*8],r10
+    mov g_x64Registers[12*8],r11
+    mov g_x64Registers[13*8],r12
+    mov g_x64Registers[14*8],r13
+    mov g_x64Registers[15*8],r14
+    mov g_x64Registers[16*8],r15
+    
+    lea rax,[g_x64Registers+17*8]
+    movaps [rax+0*16],xmm0      ;Save SSE registers
+    movaps [rax+1*16],xmm1
+    movaps [rax+2*16],xmm2
+    movaps [rax+3*16],xmm3
+    movaps [rax+4*16],xmm4
+    movaps [rax+5*16],xmm5
+    movaps [rax+6*16],xmm6
+    movaps [rax+7*16],xmm7
+    movaps [rax+8*16],xmm8
+    movaps [rax+9*16],xmm9
+    movaps [rax+10*16],xmm10
+    movaps [rax+11*16],xmm11
+    movaps [rax+12*16],xmm12
+    movaps [rax+13*16],xmm13
+    movaps [rax+14*16],xmm14
+    movaps [rax+15*16],xmm15
+
+    mov rax,Temp
 
     ret
 SaveRegisters ENDP
 
 RestoreRegisters PROC
-    mov rax,registersx64[2*8]
-    mov rbx,registersx64[3*8]
-    mov rcx,registersx64[4*8]
-    mov rdx,registersx64[5*8]
-    mov rsi,registersx64[6*8]
-    mov rdi,registersx64[7*8]
-    mov rbp,registersx64[8*8]
-    mov r8,registersx64[9*8]
-    mov r9,registersx64[10*8]
-    mov r10,registersx64[11*8]
-    mov r11,registersx64[12*8]
-    mov r12,registersx64[13*8]
-    mov r13,registersx64[14*8]
-    mov r14,registersx64[15*8]
-    mov r15,registersx64[16*8]
+    lea rax,[g_x64Registers+17*8]
+    movaps xmm15,[rax+15*16]
+    movaps xmm14,[rax+14*16]
+    movaps xmm13,[rax+13*16]
+    movaps xmm12,[rax+12*16]
+    movaps xmm11,[rax+11*16]
+    movaps xmm10,[rax+10*16]
+    movaps xmm9,[rax+9*16]
+    movaps xmm8,[rax+8*16]
+    movaps xmm7,[rax+7*16]
+    movaps xmm6,[rax+6*16]
+    movaps xmm5,[rax+5*16]
+    movaps xmm4,[rax+4*16]
+    movaps xmm3,[rax+3*16]
+    movaps xmm2,[rax+2*16]
+    movaps xmm1,[rax+1*16]
+    movaps xmm0,[rax+0*16]
 
-    mov rsp,registersx64[1*8] 
+    mov r15,g_x64Registers[16*8]        ;Restore registers
+    mov r14,g_x64Registers[15*8]
+    mov r13,g_x64Registers[14*8]
+    mov r12,g_x64Registers[13*8]
+    mov r11,g_x64Registers[12*8]
+    mov r10,g_x64Registers[11*8]
+    mov r9,g_x64Registers[10*8]
+    mov r8,g_x64Registers[9*8]
+    mov rbp,g_x64Registers[8*8]
+    mov rdi,g_x64Registers[7*8]
+    mov rsi,g_x64Registers[6*8]
+    mov rdx,g_x64Registers[5*8]
+    mov rcx,g_x64Registers[4*8]
+    mov rbx,g_x64Registers[3*8]
+    mov rax,g_x64Registers[2*8]
+
+    mov rsp,g_x64Registers[1*8] 
     sub rsp,8                   ;Add Caller Return
 
     mov Temp,rax
-    mov rax,registersx64[0*8]   ;Move flags
+    mov rax,g_x64Registers[0*8]         ;Move flags
     push rax                    ;Push flags to stack
     popfq                       ;Restore flags
     mov rax,Temp
@@ -78,6 +119,23 @@ ClearRegisters PROC
     mov r14,0
     mov r15,0
     mov rdi,0
+
+    xorps xmm0,xmm0
+    xorps xmm1,xmm1
+    xorps xmm2,xmm2
+    xorps xmm3,xmm3
+    xorps xmm4,xmm4
+    xorps xmm5,xmm5
+    xorps xmm6,xmm6
+    xorps xmm7,xmm7
+    xorps xmm8,xmm8
+    xorps xmm9,xmm9
+    xorps xmm10,xmm10
+    xorps xmm11,xmm11
+    xorps xmm12,xmm12
+    xorps xmm13,xmm13
+    xorps xmm14,xmm14
+    xorps xmm15,xmm15
 
     ;mov rbp,0
     mov rsi,0

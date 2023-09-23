@@ -39,7 +39,9 @@
     <ClCompile Include="VirtualProtect.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="AssemblyUtil.asm" />
+    <MASM Include="AssemblyUtil.asm">
+      <FileType>Document</FileType>
+    </MASM>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

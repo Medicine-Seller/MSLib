@@ -67,8 +67,8 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="AssemblyUtil.asm">
+    <MASM Include="AssemblyUtil.asm">
       <Filter>Resource Files</Filter>
-    </None>
+    </MASM>
   </ItemGroup>
 </Project>
