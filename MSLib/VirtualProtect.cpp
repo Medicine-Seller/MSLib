@@ -1,4 +1,4 @@
-#include "MainHeader.h"
+#include "MSLib.h"
 
 VOID ms::PushProtectWrite(uintptr_t* pulAddress, size_t ulSize)
 {

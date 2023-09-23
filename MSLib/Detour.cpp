@@ -1,4 +1,4 @@
-#include "MainHeader.h"
+#include "MSLib.h"
 
 std::vector<BYTE> ms::Detour(uintptr_t* pulDestination, uintptr_t* pulSource, size_t ulSize, DETOUR_TYPE jmpType)
 {

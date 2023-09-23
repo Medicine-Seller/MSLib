@@ -1,4 +1,4 @@
-#include "MainHeader.h"
+#include "MSLib.h"
 
 bool ms::ConsoleOpen(LPCTSTR lpTitle)
 {

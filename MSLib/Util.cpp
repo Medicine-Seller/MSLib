@@ -1,4 +1,4 @@
-#include "MainHeader.h"
+#include "MSLib.h"
 
 std::string ms::ReplaceString(std::string szStr, std::string szFind, std::string szReplace)
 {

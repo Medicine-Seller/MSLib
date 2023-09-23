@@ -1,4 +1,4 @@
-#include "MainHeader.h"
+#include "MSLib.h"
 std::vector<BYTE> ms::Patch(uintptr_t* pulDestination, uintptr_t* pulSource, size_t ulSize, BOOL bKeepOldBytes)
 {
 #ifdef _DEBUG

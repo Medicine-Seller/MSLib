@@ -1,4 +1,4 @@
-#include "MainHeader.h"
+#include "MSLib.h"
 
 bool ms::SigMatched(std::vector<BYTE>& vSig, std::vector<CHAR>& vMask, uintptr_t* pulScanBeginAddr)
 {
