@@ -30,7 +30,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Console.cpp" />
-    <ClCompile Include="MainHeader.h" />
+    <ClCompile Include="MSLib.h" />
     <ClCompile Include="Patch.cpp" />
     <ClCompile Include="Scan.cpp" />
     <ClCompile Include="Detour.cpp" />
