@@ -11,17 +11,16 @@ struct SDetour
 	std::string szName;
 	std::string szModuleName;
 	std::string szSignature;
-	DWORD dwWriteSize;
-	uintptr_t* pulDestination;
-	uintptr_t& pulReturn;
-	DWORD dwOffset;
+	DWORD dwWriteSize = 0;
+	uintptr_t* pulDestination = nullptr;
+	uintptr_t* pulReturn = nullptr;
+	DWORD dwOffset = 0;
 
-	uintptr_t* pulScannedAddr;
+	uintptr_t* pulScannedAddr = nullptr;
 	std::vector<BYTE> vOriginalBytes;
 
 	BOOL bAttached = FALSE;
-	BOOL bSigAddrFound = FALSE;
-	BOOL Attach(DETOUR_TYPE DETOUR_TYPE);
+	BOOL Attach(DETOUR_TYPE DETOUR_TYPE = DETOUR_TYPE::JMP_ABSOLUTE);
 	VOID Detach();
 };
 

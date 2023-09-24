@@ -6,13 +6,12 @@ struct SPatch
 	std::string szModuleName;
 	std::string szSignature;
 	std::string szPatchBytes;
-	DWORD dwOffset;
-	std::vector<uintptr_t*> vScannedPatternAddrs;
-	std::vector<std::vector<BYTE>> vOriginalBytes;
+	DWORD dwOffset = 0;
+	std::vector<uintptr_t*> vScannedPatternAddrs = nullptr;
+	std::vector<std::vector<BYTE>> vOriginalBytes = nullptr;
 
 	BOOL bAttached = false;
-	BOOL bPatternFound = false;
-	BOOL Attach(STOP_CONDITION stopCondition);
+	BOOL Attach(STOP_CONDITION stopCondition = STOP_CONDITION::FIRST_RESULT);
 	VOID Detach();
 };
 

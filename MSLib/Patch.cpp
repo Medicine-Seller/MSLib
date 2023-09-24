@@ -28,7 +28,7 @@ BOOL ms::SPatch::Attach(STOP_CONDITION stopCondition)
 	std::vector<CHAR> vMask = GenerateMask(szSignature);
 	std::vector<BYTE> vSig = StringToBytes(ReplaceString(szSignature, "?", "0"));
 
-	if (!bPatternFound)
+	if (vScannedPatternAddrs.empty())
 	{
 		std::vector<uintptr_t*> vAddrResults = ModuleAobScan(vSig, vMask, szModuleName, stopCondition);
 		if (vAddrResults.empty())
@@ -44,7 +44,6 @@ BOOL ms::SPatch::Attach(STOP_CONDITION stopCondition)
 			vScannedPatternAddrs.push_back(vAddrResults[i]);
 			vScannedPatternAddrs[i] = IncrementByByte(vScannedPatternAddrs[i], dwOffset); 
 		}
-		bPatternFound = TRUE;
 	}
 
 	std::vector<BYTE> vPatchBytes = StringToBytes(szPatchBytes);

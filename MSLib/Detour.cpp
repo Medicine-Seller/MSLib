@@ -43,20 +43,18 @@ BOOL ms::SDetour::Attach(DETOUR_TYPE jmpType)
 	if (bAttached)
 		return TRUE;
 
-	if (!bSigAddrFound)
+	if (pulScannedAddr == nullptr)
 	{
 		std::vector<uintptr_t*> vAddrResults = StringAobScan(szSignature, szModuleName);
 		if (vAddrResults.empty())
 			return FALSE;
 
-		pulScannedAddr = vAddrResults[0] + dwOffset;
-		pulReturn = reinterpret_cast<uintptr_t>(pulScannedAddr) + dwWriteSize;
-		bSigAddrFound = TRUE;
+		pulScannedAddr = IncrementByByte(vAddrResults[0], dwOffset);
+		*pulReturn = reinterpret_cast<uintptr_t>(IncrementByByte(pulScannedAddr, dwWriteSize));
 	}
 
 	vOriginalBytes = Detour(pulScannedAddr, pulDestination, dwWriteSize, jmpType);
 	bAttached = TRUE;
-
 #ifdef ENABLE_LOGGING
 	std::cout << COL2("SDetour::Attach::" + szName, pulScannedAddr, szName + " = " + pulDestination) << std::endl;
 #endif
