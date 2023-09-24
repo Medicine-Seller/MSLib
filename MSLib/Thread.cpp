@@ -9,20 +9,24 @@ typedef NTSTATUS(__stdcall* f_NtQueryInformationThread)(HANDLE, THREADINFOCLASS,
 
 ULONG_PTR ms::GetThreadStartAddress(HANDLE hThread)
 {
-	auto NtQueryInformationThread = reinterpret_cast<f_NtQueryInformationThread>(GetProcAddress(GetModuleHandleA("ntdll.dll"), "NtQueryInformationThread"));
+	HMODULE hNtdll = GetModuleHandleA("ntdll.dll");
+	if (hNtdll == INVALID_HANDLE_VALUE)
+		return 0;
+
+	auto NtQueryInformationThread = reinterpret_cast<f_NtQueryInformationThread>(GetProcAddress(hNtdll, "NtQueryInformationThread"));
 	if (!NtQueryInformationThread)
 		return 0;
 
 	ULONG_PTR ulStartAddress = 0;
-	NTSTATUS Ret = NtQueryInformationThread(hThread, ThreadQuerySetWin32StartAddress, &ulStartAddress, sizeof(ULONG_PTR), nullptr);
+	NTSTATUS status = NtQueryInformationThread(hThread, ThreadQuerySetWin32StartAddress, &ulStartAddress, sizeof(ULONG_PTR), nullptr);
 
-	if (Ret)
+	if (status)
 		return 0;
 
 	return ulStartAddress;
 }
 
-VOID ms::ModuleThreads(LPCWSTR lpModuleName, THREAD_ACTION threadAction)
+VOID ms::ModuleThreads(LPCWSTR lpModuleName, THREAD_ACTION type)
 {
 	DWORD dwProcessId = GetCurrentProcessId();
 	HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
@@ -34,8 +38,8 @@ VOID ms::ModuleThreads(LPCWSTR lpModuleName, THREAD_ACTION threadAction)
 	THREADENTRY32 threadEntry;
 	threadEntry.dwSize = sizeof(THREADENTRY32);
 
-	MODULEINFO lpModInfo;
-	GetModuleInformation(GetCurrentProcess(), hModule, &lpModInfo, sizeof(lpModInfo));
+	MODULEINFO modInfo;
+	GetModuleInformation(GetCurrentProcess(), hModule, &modInfo, sizeof(modInfo));
 
 	if (!Thread32First(hSnap, &threadEntry))
 	{
@@ -47,26 +51,27 @@ VOID ms::ModuleThreads(LPCWSTR lpModuleName, THREAD_ACTION threadAction)
 	{
 		if (threadEntry.th32OwnerProcessID != dwProcessId)
 			continue;
-
+		
 		HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, 0, threadEntry.th32ThreadID);
 		if (hThread == INVALID_HANDLE_VALUE)
 			continue;
 
-		ULONG_PTR ulThreadStartAddress = GetThreadStartAddress(hThread);
-		ULONG_PTR ulModuleBase = reinterpret_cast<ULONG_PTR>(lpModInfo.lpBaseOfDll);
-		if (ulModuleBase < ulThreadStartAddress && ulThreadStartAddress < ulModuleBase + lpModInfo.SizeOfImage)
+		ULONG_PTR lpThreadStartAddress = GetThreadStartAddress(hThread);
+		ULONG_PTR lpModuleBase = reinterpret_cast<ULONG_PTR>(modInfo.lpBaseOfDll);
+		if (lpModuleBase < lpThreadStartAddress && lpThreadStartAddress < lpModuleBase + modInfo.SizeOfImage)
 		{
-			switch (threadAction)
+			switch (type)
 			{
 			case THREAD_ACTION::RESUME: ResumeThread(hThread); break;
 			case THREAD_ACTION::SUSPEND: SuspendThread(hThread); break;
 			case THREAD_ACTION::TERMINATE: TerminateThread(hThread, 0); break;
 			}
-#ifdef ENABLE_LOGGING
-			std::cout << COL2("ModuleThreads::" + ulThreadStartAddress, "Modified");
+#ifdef _DEBUG
+			std::cout << COL2("ModuleThreads::Thread modified", reinterpret_cast<uintptr_t*>(lpThreadStartAddress)) << std::endl;
 #endif
 		}
 		CloseHandle(hThread);
+
 	} while (Thread32Next(hSnap, &threadEntry));
 
 	CloseHandle(hSnap);

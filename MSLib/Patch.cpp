@@ -42,7 +42,7 @@ BOOL ms::SPatch::Attach(STOP_CONDITION stopCondition)
 		for (size_t i = 0; i < vAddrResults.size(); i++)
 		{
 			vScannedPatternAddrs.push_back(vAddrResults[i]);
-			vScannedPatternAddrs[i] = reinterpret_cast<uintptr_t*>(reinterpret_cast<BYTE*>(vScannedPatternAddrs[i]) + dwOffset); 
+			vScannedPatternAddrs[i] = IncrementByByte(vScannedPatternAddrs[i], dwOffset); 
 		}
 		bPatternFound = TRUE;
 	}
@@ -50,7 +50,8 @@ BOOL ms::SPatch::Attach(STOP_CONDITION stopCondition)
 	std::vector<BYTE> vPatchBytes = StringToBytes(szPatchBytes);
 	for (auto& addr : vScannedPatternAddrs)
 	{
-		vOriginalBytes.push_back(Patch(addr, reinterpret_cast<uintptr_t*>(vPatchBytes.data()), vPatchBytes.size(), TRUE));
+		std::vector<BYTE> vBytesBeforeWrite = Patch(addr, reinterpret_cast<uintptr_t*>(vPatchBytes.data()), vPatchBytes.size(), TRUE);
+		vOriginalBytes.push_back(vBytesBeforeWrite);
 #ifdef ENABLE_LOGGING
 		std::cout << COL2("SPatch::Attach::" + szName, addr) << std::endl;
 #endif

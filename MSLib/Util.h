@@ -5,6 +5,12 @@ std::vector<BYTE> StringToBytes(std::string szBytes);
 std::vector<CHAR> GenerateMask(std::string szSig);
 
 template<typename DataType>
+DataType* IncrementByByte(DataType* pulAddress, intptr_t ulOffset)
+{
+	return reinterpret_cast<DataType*>(reinterpret_cast<BYTE*>(pulAddress) + ulOffset);
+}
+
+template<typename DataType>
 DataType GetAddress(uintptr_t base, std::vector<uintptr_t> offsets)
 {
 	for (unsigned int i = 0; i < offsets.size(); i++)
