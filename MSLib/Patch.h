@@ -7,8 +7,8 @@ struct SPatch
 	std::string szSignature;
 	std::string szPatchBytes;
 	DWORD dwOffset = 0;
-	std::vector<uintptr_t*> vScannedPatternAddrs = nullptr;
-	std::vector<std::vector<BYTE>> vOriginalBytes = nullptr;
+	std::vector<uintptr_t*> vScannedPatternAddrs;
+	std::vector<std::vector<BYTE>> vOriginalBytes;
 
 	BOOL bAttached = false;
 	BOOL Attach(STOP_CONDITION stopCondition = STOP_CONDITION::FIRST_RESULT);
