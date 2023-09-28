@@ -1,4 +1,7 @@
-#include "MSLib.h"
+#include "Thread.h"
+#include "Macros.h"
+#include <TlHelp32.h>
+#include <Psapi.h>
 
 enum THREADINFOCLASS
 {

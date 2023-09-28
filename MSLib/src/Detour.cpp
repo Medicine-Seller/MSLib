@@ -1,4 +1,8 @@
-#include "MSLib.h"
+#include "Detour.h"
+#include "VirtualProtect.h"
+#include "Patch.h"
+#include "Util.h"
+#include "Macros.h"
 
 std::vector<BYTE> ms::Detour(uintptr_t* pulDestination, uintptr_t* pulSource, size_t ulSize, DETOUR_TYPE jmpType)
 {
@@ -55,7 +59,7 @@ BOOL ms::SDetour::Attach(DETOUR_TYPE jmpType)
 
 	vOriginalBytes = Detour(pulScannedAddr, pulDestination, dwWriteSize, jmpType);
 	bAttached = TRUE;
-#ifdef ENABLE_LOGGING
+#ifdef _DEBUG
 	std::cout << COL2("SDetour::Attach::" + szName, pulScannedAddr, szName + " = " + pulDestination) << std::endl;
 #endif
 	return TRUE;
@@ -71,7 +75,7 @@ VOID ms::SDetour::Detach()
 	vOriginalBytes.clear();
 	bAttached = FALSE;
 
-#ifdef ENABLE_LOGGING
+#ifdef _DEBUG
 	std::cout << COL2("SDetour::Attach::" + szName, "Detached") << std::endl;
 #endif
 }

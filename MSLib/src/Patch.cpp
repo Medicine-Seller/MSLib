@@ -1,4 +1,9 @@
-#include "MSLib.h"
+#include "Patch.h"
+#include "VirtualProtect.h"
+#include "Util.h"
+#include "Macros.h"
+
+
 std::vector<BYTE> ms::Patch(uintptr_t* pulDestination, uintptr_t* pulSource, size_t ulSize, BOOL bKeepOldBytes)
 {
 #ifdef _DEBUG
@@ -33,7 +38,7 @@ BOOL ms::SPatch::Attach(STOP_CONDITION stopCondition)
 		std::vector<uintptr_t*> vAddrResults = ModuleAobScan(vSig, vMask, szModuleName, stopCondition);
 		if (vAddrResults.empty())
 		{
-#ifdef ENABLE_LOGGING
+#ifdef _DEBUG
 			std::cout << COL2("SPatch::Attach::" + szName, "Can not find pattern") << std::endl;
 #endif
 			return FALSE;
@@ -51,7 +56,7 @@ BOOL ms::SPatch::Attach(STOP_CONDITION stopCondition)
 	{
 		std::vector<BYTE> vBytesBeforeWrite = Patch(addr, reinterpret_cast<uintptr_t*>(vPatchBytes.data()), vPatchBytes.size(), TRUE);
 		vOriginalBytes.push_back(vBytesBeforeWrite);
-#ifdef ENABLE_LOGGING
+#ifdef _DEBUG
 		std::cout << COL2("SPatch::Attach::" + szName, addr) << std::endl;
 #endif
 	}
@@ -69,7 +74,7 @@ VOID ms::SPatch::Detach()
 	{
 		Patch(vScannedPatternAddrs[i], reinterpret_cast<uintptr_t*>(vOriginalBytes[i].data()), vOriginalBytes[i].size(), FALSE);
 		vOriginalBytes[i].clear();
-#ifdef ENABLE_LOGGING
+#ifdef _DEBUG
 		std::cout << COL2("SPatch::Detach::" + szName, "Detached") << std::endl;
 #endif
 	}

@@ -1,4 +1,5 @@
-#include "MSLib.h"
+#include "Util.h"
+#include <sstream>
 
 std::string ms::ReplaceString(std::string szStr, std::string szFind, std::string szReplace)
 {
