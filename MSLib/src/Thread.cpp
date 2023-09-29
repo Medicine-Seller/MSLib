@@ -29,54 +29,71 @@ ULONG_PTR ms::GetThreadStartAddress(HANDLE hThread)
 	return ulStartAddress;
 }
 
-VOID ms::ModuleThreads(LPCWSTR lpModuleName, THREAD_ACTION type)
+std::vector<HANDLE> ms::GetModuleThreads(LPCWSTR lpModuleName)
 {
 	DWORD dwProcessId = GetCurrentProcessId();
 	HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
 	HMODULE hModule = GetModuleHandle(lpModuleName);
 
 	if (hSnap == INVALID_HANDLE_VALUE || hModule == INVALID_HANDLE_VALUE)
-		return;
+		return {};
 
 	THREADENTRY32 threadEntry;
 	threadEntry.dwSize = sizeof(THREADENTRY32);
 
-	MODULEINFO modInfo;
-	GetModuleInformation(GetCurrentProcess(), hModule, &modInfo, sizeof(modInfo));
-
 	if (!Thread32First(hSnap, &threadEntry))
 	{
 		CloseHandle(hSnap);
-		return;
+		return {};
 	}
+
+	std::vector<HANDLE> vThreadHandles;
+	MODULEINFO modInfo;
+	GetModuleInformation(GetCurrentProcess(), hModule, &modInfo, sizeof(modInfo));
 
 	do
 	{
 		if (threadEntry.th32OwnerProcessID != dwProcessId)
 			continue;
-		
+
 		HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, 0, threadEntry.th32ThreadID);
 		if (hThread == INVALID_HANDLE_VALUE)
 			continue;
 
 		ULONG_PTR lpThreadStartAddress = GetThreadStartAddress(hThread);
 		ULONG_PTR lpModuleBase = reinterpret_cast<ULONG_PTR>(modInfo.lpBaseOfDll);
+
 		if (lpModuleBase < lpThreadStartAddress && lpThreadStartAddress < lpModuleBase + modInfo.SizeOfImage)
-		{
-			switch (type)
-			{
-			case THREAD_ACTION::RESUME: ResumeThread(hThread); break;
-			case THREAD_ACTION::SUSPEND: SuspendThread(hThread); break;
-			case THREAD_ACTION::TERMINATE: TerminateThread(hThread, 0); break;
-			}
-#ifdef _DEBUG
-			std::cout << COL2("ModuleThreads::Thread modified", reinterpret_cast<uintptr_t*>(lpThreadStartAddress)) << std::endl;
-#endif
-		}
-		CloseHandle(hThread);
+			vThreadHandles.push_back(hThread);
 
 	} while (Thread32Next(hSnap, &threadEntry));
 
 	CloseHandle(hSnap);
-	return;
+	return vThreadHandles;
+}
+
+BOOL ms::ModifyThread(HANDLE hThread, THREAD_ACTION actionType)
+{
+	DWORD dwResult = 0;
+	switch (actionType)
+	{
+	case THREAD_ACTION::RESUME: dwResult = ResumeThread(hThread); break;
+	case THREAD_ACTION::SUSPEND: dwResult = SuspendThread(hThread); break;
+	case THREAD_ACTION::TERMINATE: dwResult = TerminateThread(hThread, 0); break;
+	}
+
+	if (dwResult == 0 || dwResult == -1)
+		return FALSE;
+	
+	return TRUE;
+}
+
+BOOL ms::ModifyThread(std::vector<HANDLE> vThread, THREAD_ACTION actionType)
+{
+	BOOL bResult = 0;
+	for (auto& hThread : vThread)
+		if (hThread != INVALID_HANDLE_VALUE)
+			bResult |= ModifyThread(hThread, actionType);
+
+	return bResult;
 }

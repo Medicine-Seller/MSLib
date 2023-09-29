@@ -1,5 +1,6 @@
 #pragma once
 #include <Windows.h>
+#include <vector>
 
 namespace ms
 {
@@ -10,6 +11,8 @@ namespace ms
 		TERMINATE
 	};
 
-	VOID ModuleThreads(LPCWSTR lpModuleName, THREAD_ACTION threadAction);
+	std::vector<HANDLE> GetModuleThreads(LPCWSTR lpModuleName);
+	BOOL ModifyThread(HANDLE hThread, THREAD_ACTION actionType);
+	BOOL ModifyThread(std::vector<HANDLE> hThread, THREAD_ACTION actionType);
 	ULONG_PTR GetThreadStartAddress(HANDLE hThread);
 }
