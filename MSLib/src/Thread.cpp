@@ -8,20 +8,20 @@ enum THREADINFOCLASS
 	ThreadQuerySetWin32StartAddress = 9,
 };
 
-typedef NTSTATUS(__stdcall* f_NtQueryInformationThread)(HANDLE, THREADINFOCLASS, void*, ULONG_PTR, ULONG_PTR*);
+typedef NTSTATUS(__stdcall* pfnNtQueryInformationThread)(HANDLE, THREADINFOCLASS, void*, ULONG_PTR, ULONG_PTR*);
 
-ULONG_PTR ms::GetThreadStartAddress(HANDLE hThread)
+ULONG_PTR ms::GetThreadStartAddress(HANDLE threadHandle)
 {
-	HMODULE hNtdll = GetModuleHandleA("ntdll.dll");
-	if (hNtdll == INVALID_HANDLE_VALUE)
-		return 0;
+	HMODULE ntdll = GetModuleHandleA("ntdll.dll");
+	if (!ntdll)
+		return STATUS_INVALID_HANDLE;
 
-	auto NtQueryInformationThread = reinterpret_cast<f_NtQueryInformationThread>(GetProcAddress(hNtdll, "NtQueryInformationThread"));
+	auto NtQueryInformationThread = reinterpret_cast<pfnNtQueryInformationThread>(GetProcAddress(ntdll, "NtQueryInformationThread"));
 	if (!NtQueryInformationThread)
-		return 0;
+		return -1;
 
 	ULONG_PTR ulStartAddress = 0;
-	NTSTATUS status = NtQueryInformationThread(hThread, ThreadQuerySetWin32StartAddress, &ulStartAddress, sizeof(ULONG_PTR), nullptr);
+	NTSTATUS status = NtQueryInformationThread(threadHandle, ThreadQuerySetWin32StartAddress, &ulStartAddress, sizeof(ULONG_PTR), nullptr);
 
 	if (status)
 		return 0;
@@ -29,13 +29,13 @@ ULONG_PTR ms::GetThreadStartAddress(HANDLE hThread)
 	return ulStartAddress;
 }
 
-std::vector<HANDLE> ms::GetModuleThreads(LPCWSTR lpModuleName)
+std::vector<HANDLE> ms::GetModuleThreads(LPCWSTR moduleName)
 {
-	DWORD dwProcessId = GetCurrentProcessId();
+	ULONG dwProcessId = GetCurrentProcessId();
 	HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
-	HMODULE hModule = GetModuleHandle(lpModuleName);
+	HMODULE moduleHandle = GetModuleHandle(moduleName);
 
-	if (hSnap == INVALID_HANDLE_VALUE || hModule == INVALID_HANDLE_VALUE)
+	if (!hSnap || !moduleHandle)
 		return {};
 
 	THREADENTRY32 threadEntry;
@@ -49,22 +49,22 @@ std::vector<HANDLE> ms::GetModuleThreads(LPCWSTR lpModuleName)
 
 	std::vector<HANDLE> vThreadHandles;
 	MODULEINFO modInfo;
-	GetModuleInformation(GetCurrentProcess(), hModule, &modInfo, sizeof(modInfo));
+	GetModuleInformation(GetCurrentProcess(), moduleHandle, &modInfo, sizeof(modInfo));
 
 	do
 	{
 		if (threadEntry.th32OwnerProcessID != dwProcessId)
 			continue;
 
-		HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, 0, threadEntry.th32ThreadID);
-		if (hThread == INVALID_HANDLE_VALUE)
+		HANDLE threadHandle = OpenThread(THREAD_ALL_ACCESS, 0, threadEntry.th32ThreadID);
+		if (!threadHandle)
 			continue;
 
-		ULONG_PTR lpThreadStartAddress = GetThreadStartAddress(hThread);
+		ULONG_PTR lpThreadStartAddress = GetThreadStartAddress(threadHandle);
 		ULONG_PTR lpModuleBase = reinterpret_cast<ULONG_PTR>(modInfo.lpBaseOfDll);
 
 		if (lpModuleBase < lpThreadStartAddress && lpThreadStartAddress < lpModuleBase + modInfo.SizeOfImage)
-			vThreadHandles.push_back(hThread);
+			vThreadHandles.push_back(threadHandle);
 
 	} while (Thread32Next(hSnap, &threadEntry));
 
@@ -72,14 +72,14 @@ std::vector<HANDLE> ms::GetModuleThreads(LPCWSTR lpModuleName)
 	return vThreadHandles;
 }
 
-BOOL ms::ModifyThread(HANDLE hThread, THREAD_ACTION actionType)
+BOOL ms::ModifyThread(HANDLE threadHandle, THREAD_ACTION actionType)
 {
-	DWORD dwResult = 0;
+	ULONG dwResult = 0;
 	switch (actionType)
 	{
-	case THREAD_ACTION::RESUME: dwResult = ResumeThread(hThread); break;
-	case THREAD_ACTION::SUSPEND: dwResult = SuspendThread(hThread); break;
-	case THREAD_ACTION::TERMINATE: dwResult = TerminateThread(hThread, 0); break;
+	case THREAD_ACTION::RESUME: dwResult = ResumeThread(threadHandle); break;
+	case THREAD_ACTION::SUSPEND: dwResult = SuspendThread(threadHandle); break;
+	case THREAD_ACTION::TERMINATE: dwResult = TerminateThread(threadHandle, 0); break;
 	}
 
 	if (dwResult == 0 || dwResult == -1)
@@ -91,9 +91,9 @@ BOOL ms::ModifyThread(HANDLE hThread, THREAD_ACTION actionType)
 BOOL ms::ModifyThread(std::vector<HANDLE> vThread, THREAD_ACTION actionType)
 {
 	BOOL bResult = 0;
-	for (auto& hThread : vThread)
-		if (hThread != INVALID_HANDLE_VALUE)
-			bResult |= ModifyThread(hThread, actionType);
+	for (auto& threadHandle : vThread)
+		if (threadHandle)
+			bResult |= ModifyThread(threadHandle, actionType);
 
 	return bResult;
 }

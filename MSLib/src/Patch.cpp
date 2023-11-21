@@ -1,84 +1,73 @@
+#include "Macros.h"
 #include "Patch.h"
 #include "VirtualProtect.h"
 #include "Util.h"
-#include "Macros.h"
 
-
-std::vector<BYTE> ms::Patch(uintptr_t* pulDestination, uintptr_t* pulSource, size_t ulSize, BOOL bKeepOldBytes)
+NTSTATUS ms::Patch(uintptr_t* destination, uintptr_t* source, SIZE_T writeSize, std::vector<BYTE> *originalBytes)
 {
-#ifdef _DEBUG
-	std::cout << COL2("Patch1::pulDestination", pulDestination) << std::endl;
-	std::cout << COL2("Patch1::pulSource", pulSource) << std::endl;
-	std::cout << COL2("Patch1::ulSize", ulSize) << std::endl;
-#endif
-	std::vector<BYTE> vOriginalBytes;
+	NTSTATUS status = PushProtectWrite(destination, writeSize, PAGE_EXECUTE_READWRITE);
+	if (status != STATUS_SUCCESS)
+		return status;
 
-	PushProtectWrite(pulDestination, ulSize);
-	if (bKeepOldBytes)
+	if (originalBytes != nullptr)
 	{
-		vOriginalBytes.resize(ulSize);
-		memcpy(vOriginalBytes.data(), pulDestination, ulSize);
+		originalBytes->resize(writeSize);
+		memcpy(originalBytes->data(), destination, writeSize);
 	}
-	memcpy(pulDestination, pulSource, ulSize);
+	memcpy(destination, source, writeSize);
 
 	PopProtectWrite();
-	return vOriginalBytes;
+
+	return STATUS_SUCCESS;
 }
 
-BOOL ms::SPatch::Attach(STOP_CONDITION stopCondition)
+NTSTATUS ms::SPatch::Attach(STOP_CONDITION stopCondition)
 {
-	if (bAttached)
-		return TRUE;
+	if (IsAttached)
+		return STATUS_SUCCESS;
 
-	std::vector<CHAR> vMask = GenerateMask(szSignature);
-	std::vector<BYTE> vSig = StringToBytes(ReplaceString(szSignature, "?", "0"));
+	std::vector<CHAR> mask = GenerateMask(Signature);
+	std::vector<BYTE> signature = StringToBytes(ReplaceString(Signature, "?", "0"));
 
-	if (vScannedPatternAddrs.empty())
+	if (ScannedAddresses.empty())
 	{
-		std::vector<uintptr_t*> vAddrResults = ModuleAobScan(vSig, vMask, szModuleName, stopCondition);
+		std::vector<uintptr_t*> vAddrResults = AOBScanModule(signature, mask, ModuleName, stopCondition);
 		if (vAddrResults.empty())
-		{
-#ifdef _DEBUG
-			std::cout << COL2("SPatch::Attach::" + szName, "Can not find pattern") << std::endl;
-#endif
-			return FALSE;
-		}
+			return -1;
 
-		for (size_t i = 0; i < vAddrResults.size(); i++)
+		for (SIZE_T i = 0; i < vAddrResults.size(); i++)
 		{
-			vScannedPatternAddrs.push_back(vAddrResults[i]);
-			vScannedPatternAddrs[i] = IncrementByByte(vScannedPatternAddrs[i], dwOffset); 
+			ScannedAddresses.push_back(vAddrResults[i]);
+			ScannedAddresses[i] = IncrementByByte(ScannedAddresses[i], Offset); 
 		}
 	}
 
-	std::vector<BYTE> vPatchBytes = StringToBytes(szPatchBytes);
-	for (auto& addr : vScannedPatternAddrs)
+	std::vector<BYTE> vPatchBytes = StringToBytes(PatchBytes);
+	for (auto& addr : ScannedAddresses)
 	{
-		std::vector<BYTE> vBytesBeforeWrite = Patch(addr, reinterpret_cast<uintptr_t*>(vPatchBytes.data()), vPatchBytes.size(), TRUE);
-		vOriginalBytes.push_back(vBytesBeforeWrite);
-#ifdef _DEBUG
-		std::cout << COL2("SPatch::Attach::" + szName, addr) << std::endl;
-#endif
+		std::vector<BYTE> vBytesBeforeWrite;
+		NTSTATUS status = Patch(addr, reinterpret_cast<uintptr_t*>(vPatchBytes.data()), vPatchBytes.size(), &vBytesBeforeWrite);
+		if (status != STATUS_SUCCESS)
+			return status;
+
+		OriginalBytes.push_back(vBytesBeforeWrite);
 	}
 
-	bAttached = TRUE;
-	return TRUE;
+	IsAttached = TRUE;
+	return STATUS_SUCCESS;
 }
 
 VOID ms::SPatch::Detach()
 {
-	if (!bAttached || vScannedPatternAddrs.empty())
+	if (!IsAttached || ScannedAddresses.empty())
 		return;
 
-	for (size_t i = 0; i < vScannedPatternAddrs.size(); i++)
+	for (SIZE_T i = 0; i < ScannedAddresses.size(); i++)
 	{
-		Patch(vScannedPatternAddrs[i], reinterpret_cast<uintptr_t*>(vOriginalBytes[i].data()), vOriginalBytes[i].size(), FALSE);
-		vOriginalBytes[i].clear();
-#ifdef _DEBUG
-		std::cout << COL2("SPatch::Detach::" + szName, "Detached") << std::endl;
-#endif
+		Patch(ScannedAddresses[i], reinterpret_cast<uintptr_t*>(OriginalBytes[i].data()), OriginalBytes[i].size(), nullptr);
+		OriginalBytes[i].clear();
 	}
 
-	vOriginalBytes.clear();
-	bAttached = FALSE;
+	OriginalBytes.clear();
+	IsAttached = FALSE;
 }

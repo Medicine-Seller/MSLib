@@ -1,26 +1,28 @@
-#pragma once
 #include <Windows.h>
 #include <vector>
+
+#ifndef VIRTUALPROTECT_H
+#define VIRTUALPROTECT_H
 
 namespace ms
 {
 	struct SProtect
 	{
-		uintptr_t* pulAddress;
-		size_t ulSize;
-		DWORD dwOriginalProtect;
+		uintptr_t* Address;
+		SIZE_T WriteSize;
+		ULONG OriginalProtect;
 	};
 
-	static std::vector<SProtect> g_vProtectList;
+	static std::vector<SProtect> ProtectList;
 
-	// Description: Overwrite memory protection for Read/Write and pop onto list
-	// [in] pulAddress - Pointer to address/location
-	// [in] ulSize - Size of bytes to overwrite protection
-	VOID PushProtectWrite(uintptr_t* pulAddress, size_t ulSize);
+	NTSTATUS PushProtectWriteEx(HANDLE processHandle, uintptr_t* address, SIZE_T writeSize, ULONG newProtect);
+	NTSTATUS PushProtectWrite(uintptr_t* address, SIZE_T writeSize, ULONG newProtect);
 
-	// Description: Restore memory protection and pop off list
-	VOID PopProtectWrite();
+	NTSTATUS PopProtectWriteEx(HANDLE processHandle);
+	NTSTATUS PopProtectWrite();
 
-	// Description: Restore all memory protections and clear list
+	VOID RestoreAllWritablesEx(HANDLE processHandle);
 	VOID RestoreAllWritables();
 }
+
+#endif

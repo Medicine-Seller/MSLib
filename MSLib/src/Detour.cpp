@@ -1,81 +1,81 @@
+#include "Macros.h"
 #include "Detour.h"
 #include "VirtualProtect.h"
 #include "Patch.h"
 #include "Util.h"
-#include "Macros.h"
 
-std::vector<BYTE> ms::Detour(uintptr_t* pulDestination, uintptr_t* pulSource, size_t ulSize, DETOUR_TYPE jmpType)
+
+NTSTATUS ms::Detour(uintptr_t* destination, uintptr_t* source, SIZE_T writeSize, std::vector<BYTE>* originalBytes, DETOUR_TYPE jumpType)
 {
-#ifdef _DEBUG
-	std::cout << COL2("Detour::pulDestination", pulDestination) << std::endl;
-	std::cout << COL2("Detour::pulSource", pulSource) << std::endl;
-	std::cout << COL2("Detour::ulSize", ulSize) << std::endl;
-#endif
-	static const BYTE sbRelativeJump[] = "\xE9";
-	static const BYTE sbAbsoluteJump[] = "\xFF\x25\x00\x00\x00\x00";
+	static const BYTE relativeJump[] = "\xE9";
+	static const BYTE absoluteJump[] = "\xFF\x25\x00\x00\x00\x00";
 
-	if (jmpType == JMP_RELATIVE && ulSize < 5)
-		return {};
-	else if (jmpType == JMP_ABSOLUTE && ulSize < 14)
-		return {};
+	if (jumpType == JMP_RELATIVE && writeSize < 5)
+		return -1;
+	else if (jumpType == JMP_ABSOLUTE && writeSize < 14)
+		return -1;
 
-	PushProtectWrite(pulDestination, ulSize);
+	std::vector<BYTE> jumpShellCode(writeSize, 0x90);
 
-	std::vector<BYTE> vOriginalBytes(ulSize);
-	memcpy(vOriginalBytes.data(), pulDestination, ulSize);
-	memset(pulDestination, 0x90, ulSize);
-
-	if (jmpType == JMP_RELATIVE)
+	if (jumpType == JMP_RELATIVE)
 	{
-		memcpy(pulDestination, sbRelativeJump, 1);
-		uintptr_t ulJmpLocation = reinterpret_cast<uintptr_t>(pulSource) - reinterpret_cast<uintptr_t>(pulDestination) - 5;
-		*reinterpret_cast<uintptr_t*>(reinterpret_cast<BYTE*>(pulDestination) + 1) = ulJmpLocation;
+		memcpy(jumpShellCode.data(), relativeJump, 1);
+		uintptr_t jumpLocation = reinterpret_cast<uintptr_t>(source) - reinterpret_cast<uintptr_t>(jumpShellCode.data()) - 5;
+		*reinterpret_cast<uintptr_t*>(jumpShellCode.data() + 1) = jumpLocation;
 	}
-	else if (jmpType == JMP_ABSOLUTE)
+	else if (jumpType == JMP_ABSOLUTE)
 	{
-		memcpy(pulDestination, sbAbsoluteJump, 6);
-		*reinterpret_cast<uintptr_t*>(reinterpret_cast<BYTE*>(pulDestination) + 6) = reinterpret_cast<uintptr_t>(pulSource);
+		memcpy(jumpShellCode.data(), absoluteJump, 6);
+		*reinterpret_cast<uintptr_t*>(jumpShellCode.data() + 6) = reinterpret_cast<uintptr_t>(source);
 	}
+	else
+	{
+		return -1;
+	}
+
+	NTSTATUS status = PushProtectWrite(destination, writeSize, PAGE_EXECUTE_READWRITE);
+	if (status != STATUS_SUCCESS)
+		return status;
+
+	status = Patch(destination, reinterpret_cast<uintptr_t*>(jumpShellCode.data()), jumpShellCode.size(), originalBytes);
+	if (status != STATUS_SUCCESS)
+		return status;
 
 	PopProtectWrite();
 
-	return vOriginalBytes;
+	return STATUS_SUCCESS;
 }
 
-BOOL ms::SDetour::Attach(DETOUR_TYPE jmpType)
+NTSTATUS ms::DetourStructure::Attach(DETOUR_TYPE jumpType)
 {
-	if (bAttached)
-		return TRUE;
+	if (IsAttached)
+		return STATUS_SUCCESS;
 
-	if (pulScannedAddr == nullptr)
+	if (Source == nullptr)
 	{
-		std::vector<uintptr_t*> vAddrResults = StringAobScan(szSignature, szModuleName);
+		std::vector<uintptr_t*> vAddrResults = AOBScanString(Signature, ModuleName);
 		if (vAddrResults.empty())
-			return FALSE;
+			return -1;
 
-		pulScannedAddr = IncrementByByte(vAddrResults[0], dwOffset);
-		*pulReturn = reinterpret_cast<uintptr_t>(IncrementByByte(pulScannedAddr, dwWriteSize));
+		Source = IncrementByByte(vAddrResults[0], Offset);
+		*ReturnAddress = reinterpret_cast<uintptr_t>(IncrementByByte(Source, WriteSize));
 	}
 
-	vOriginalBytes = Detour(pulScannedAddr, pulDestination, dwWriteSize, jmpType);
-	bAttached = TRUE;
-#ifdef _DEBUG
-	std::cout << COL2("SDetour::Attach::" + szName, pulScannedAddr, szName + " = " + pulDestination) << std::endl;
-#endif
-	return TRUE;
+	NTSTATUS status = Detour(Source, Destination, WriteSize, &OriginalBytes, jumpType);
+	if (status != STATUS_SUCCESS)
+		return status;
+
+	IsAttached = TRUE;
+	return STATUS_SUCCESS;
 }
 
-VOID ms::SDetour::Detach()
+VOID ms::DetourStructure::Detach()
 {
-	if (!bAttached || pulScannedAddr == nullptr)
+	if (!IsAttached || Source == nullptr)
 		return;
 
-	Patch(pulScannedAddr, reinterpret_cast<uintptr_t*>(vOriginalBytes.data()), dwWriteSize, FALSE);
+	Patch(Source, reinterpret_cast<uintptr_t*>(OriginalBytes.data()), WriteSize, nullptr);
 
-	vOriginalBytes.clear();
-	bAttached = FALSE;
-
-#ifdef _DEBUG
-	std::cout << COL2("SDetour::Attach::" + szName, "Detached") << std::endl;
-#endif
+	OriginalBytes.clear();
+	IsAttached = FALSE;
 }

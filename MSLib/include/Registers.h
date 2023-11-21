@@ -1,5 +1,7 @@
-#pragma once
 #include <Windows.h>
+
+#ifndef REGISTERS_H
+#define REGISTERS_H
 
 namespace ms
 {
@@ -58,3 +60,5 @@ namespace ms
 		uintptr_t xmm16_upper;
 	};
 }
+
+#endif

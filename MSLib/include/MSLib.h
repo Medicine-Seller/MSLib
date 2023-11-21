@@ -1,3 +1,5 @@
+#include "NtApiTypes.h"
+#include "NtApi.h"
 #include "Console.h"
 #include "Detour.h"
 #include "Macros.h"
@@ -5,5 +7,7 @@
 #include "Registers.h"
 #include "Scan.h"
 #include "Thread.h"
+#include "Constants.h"
 #include "Util.h"
 #include "VirtualProtect.h"
+#include "Logger.h"

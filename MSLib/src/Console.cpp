@@ -1,12 +1,13 @@
 #include "Console.h"
+#include <Windows.h>
 #include <iostream>
 
-bool ms::ConsoleOpen(LPCTSTR lpTitle)
+bool ms::ConsoleOpen(std::string title)
 {
 	if (!AllocConsole())
 		return false;
 
-	SetConsoleTitle(lpTitle);
+	SetConsoleTitleA(title.c_str());
 	FILE* newstreamptr;
 	freopen_s(&newstreamptr, "CONIN$", "r", stdin);
 	freopen_s(&newstreamptr, "CONOUT$", "w", stdout);
