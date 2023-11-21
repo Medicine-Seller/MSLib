@@ -3,31 +3,30 @@
 #include "Macros.h"
 #include <Psapi.h>
 
-
-bool ms::SigMatched(std::vector<BYTE>& vSig, std::vector<CHAR>& vMask, uintptr_t* pulScanBeginAddr)
+bool ms::IsSignatureMatch(std::vector<BYTE>& signatureBytes, std::vector<CHAR>& mask, uintptr_t* address)
 {
-	bool bSigMatched = true;
-	for (size_t i = 0; i < vMask.size(); i++)
+	bool bIsSignatureMatch = true;
+	for (SIZE_T i = 0; i < mask.size(); i++)
 	{
-		if (vMask[i] != '?' && vSig[i] != *(reinterpret_cast<BYTE*>(pulScanBeginAddr) + i))
+		if (mask[i] != '?' && signatureBytes[i] != *(reinterpret_cast<BYTE*>(address) + i))
 		{
-			bSigMatched = false;
+			bIsSignatureMatch = false;
 			break;
 		}
 	}
 
-	return bSigMatched;
+	return bIsSignatureMatch;
 }
 
-VOID ms::Scan(std::vector<uintptr_t*>* pAddrResults, std::vector<BYTE>& vSig, std::vector<CHAR>& vMask, uintptr_t* pulRegion, SIZE_T ulModuleSize , STOP_CONDITION stopCondition)
+VOID ms::Scan(std::vector<uintptr_t*>* addressResult, std::vector<BYTE>& signatureBytes, std::vector<CHAR>& mask, uintptr_t* region, SIZE_T moduleSize , STOP_CONDITION stopCondition)
 {
-	for (DWORD dwOffset = 0; dwOffset < ulModuleSize; dwOffset++)
+	for (ULONG Offset = 0; Offset < moduleSize; Offset++)
 	{
-		uintptr_t* pulScanBeginAddr = IncrementByByte(pulRegion, dwOffset);
-		if (!SigMatched(vSig, vMask, pulScanBeginAddr))
+		uintptr_t* address = IncrementByByte(region, Offset);
+		if (!IsSignatureMatch(signatureBytes, mask, address))
 			continue;
 
-		pAddrResults->push_back(pulScanBeginAddr);
+		addressResult->push_back(address);
 
 		if (stopCondition == STOP_CONDITION::FIRST_RESULT)
 			break;
@@ -36,35 +35,18 @@ VOID ms::Scan(std::vector<uintptr_t*>* pAddrResults, std::vector<BYTE>& vSig, st
 	return;
 }
 
-std::vector<uintptr_t*> ms::AobScan(std::vector<BYTE>& vSig, std::vector<CHAR>& vMask, uintptr_t* ulModuleBase, SIZE_T ulModuleSize, STOP_CONDITION stopCondition)
+
+std::vector<uintptr_t*> ms::AOBScan(std::vector<BYTE>& signatureBytes, std::vector<CHAR>& mask, uintptr_t* moduleBase, SIZE_T moduleSize, STOP_CONDITION stopCondition)
 {
-
-#ifdef _DEBUG
-	std::cout << COL2("AobScan::ulModuleBase", ulModuleBase) << std::endl;
-	std::cout << COL2("AobScan::ulModuleSize", reinterpret_cast<uintptr_t*>(ulModuleSize)) << std::endl;
-	std::cout << COL1("AobScan::vSig");
-	for (int e : vSig)
-	{
-		std::cout << std::hex << e << " ";
-	}
-	std::cout << std::endl;
-	std::cout << COL1("AobScan::vMask");
-	for (auto& e : vMask)
-	{
-		std::cout << e;
-	}
-	std::cout << std::endl;
-#endif
-
 	MEMORY_BASIC_INFORMATION mbi;
 	std::vector<uintptr_t*> vAddrResults;
 
-	for (uintptr_t* pulRegion = ulModuleBase; pulRegion < ulModuleBase + ulModuleSize; pulRegion = IncrementByByte(pulRegion, mbi.RegionSize))
+	for (uintptr_t* region = moduleBase; region < moduleBase + moduleSize; region = IncrementByByte(region, mbi.RegionSize))
 	{
-		if (!VirtualQuery(pulRegion, &mbi, sizeof(mbi)) || mbi.State != MEM_COMMIT || mbi.Protect == PAGE_NOACCESS)
+		if (!VirtualQuery(region, &mbi, sizeof(mbi)) || mbi.State != MEM_COMMIT || mbi.Protect == PAGE_NOACCESS)
 			continue;
 
-		Scan(&vAddrResults, vSig, vMask, pulRegion, mbi.RegionSize, stopCondition);
+		Scan(&vAddrResults, signatureBytes, mask, region, mbi.RegionSize, stopCondition);
 
 		if (stopCondition == STOP_CONDITION::NONE)
 			continue;
@@ -75,27 +57,23 @@ std::vector<uintptr_t*> ms::AobScan(std::vector<BYTE>& vSig, std::vector<CHAR>& 
 	return vAddrResults;
 }
 
-std::vector<uintptr_t*> ms::ModuleAobScan(std::vector<BYTE>& vSig, std::vector<CHAR>& vMask, std::string szModuleName, STOP_CONDITION stopCondition)
+std::vector<uintptr_t*> ms::AOBScanModule(std::vector<BYTE>& signatureBytes, std::vector<CHAR>& mask, std::string moduleName, STOP_CONDITION stopCondition)
 {
-	std::wstring wModuleName = std::wstring(szModuleName.begin(), szModuleName.end());
-	LPCWSTR lpModuleName = wModuleName.c_str();
-
-	HMODULE hModule = GetModuleHandle(lpModuleName);
-	if (hModule == INVALID_HANDLE_VALUE)
+	HMODULE moduleHandle = GetModuleHandleA(moduleName.c_str());
+	if (!moduleHandle)
 		return {};
 
-	MODULEINFO ModInfo;
-	GetModuleInformation(GetCurrentProcess(), hModule, &ModInfo, sizeof(MODULEINFO));
+	MODULEINFO ModInfo = GetModuleInfo(moduleHandle);
 
-	return AobScan(vSig, vMask, reinterpret_cast<uintptr_t*>(ModInfo.lpBaseOfDll), ModInfo.SizeOfImage, stopCondition);
+	return AOBScan(signatureBytes, mask, reinterpret_cast<uintptr_t*>(ModInfo.lpBaseOfDll), ModInfo.SizeOfImage, stopCondition);
 }
 
-std::vector<uintptr_t*> ms::StringAobScan(std::string szSig, std::string szModuleName, STOP_CONDITION stopCondition)
+std::vector<uintptr_t*> ms::AOBScanString(std::string signature, std::string moduleName, STOP_CONDITION stopCondition)
 {
-	std::vector<CHAR> vMask = GenerateMask(szSig);
-	std::vector<BYTE> vSig = StringToBytes(ReplaceString(szSig, "?", "0"));
+	std::vector<CHAR> mask = GenerateMask(signature);
+	std::vector<BYTE> signatureBytes = StringToBytes(ReplaceString(signature, "?", "0"));
 
-	return ModuleAobScan(vSig, vMask, szModuleName, stopCondition);
+	return AOBScanModule(signatureBytes, mask, moduleName, stopCondition);
 }
 
 
