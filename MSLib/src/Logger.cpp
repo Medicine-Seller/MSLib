@@ -1,4 +1,5 @@
 #include "Logger.h"
+#include <cstdarg>
 
 void ms::Log(std::string fileDirectory, unsigned int line, const char* format, ...)
 {

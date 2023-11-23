@@ -6,14 +6,28 @@
 
 namespace ms
 {
-	NTSTATUS QuerySystemInformation(SYSTEM_INFORMATION_CLASS systemInformationClass, PVOID systemInformation, ULONG systemInformationLength, ULONG* returnLength);
-	NTSTATUS GetVirtualMemoryInfoEx(HANDLE processHandle, PVOID baseAddress, MEMORY_BASIC_INFORMATION* mbi);
-	NTSTATUS GetVirtualMemoryInfo(PVOID baseAddress, MEMORY_BASIC_INFORMATION* mbi);
-	NTSTATUS SetProtectVirtualMemoryModuleEx(HANDLE processHandle, HMODULE moduleHandle, ULONG newProtect);
-	NTSTATUS SetProtectVirtualMemoryModule(HMODULE moduleHandle, ULONG newProtect);
-	NTSTATUS SetProtectVirtualMemoryEx(HANDLE processHandle, PVOID baseAddress, SIZE_T regionSize, ULONG newProtect, ULONG* oldProtect);
-	NTSTATUS SetProtectVirtualMemory(PVOID baseAddress, SIZE_T regionSize, ULONG newProtect, ULONG* oldProtect);
+	class NtAPI
+	{
+	private:
 
+	public:
+
+		template <typename FunctionPointer>
+		static FunctionPointer GetProcedure(PCSTR moduleName, PCSTR procedureName)
+		{
+			HMODULE module = GetModuleHandleA(moduleName);
+			if (!module)
+				return 0;
+
+			FunctionPointer functionPtr = (FunctionPointer)GetProcAddress(module, procedureName);
+			return functionPtr;
+		}
+
+		static NTSTATUS QuerySystemInformation(SYSTEM_INFORMATION_CLASS systemInformationClass, PVOID systemInformation, ULONG systemInformationLength, ULONG* returnLength);
+		static NTSTATUS GetVirtualMemoryInfoEx(HANDLE processHandle, PVOID baseAddress, MEMORY_BASIC_INFORMATION* mbi);
+		static NTSTATUS GetVirtualMemoryInfo(PVOID baseAddress, MEMORY_BASIC_INFORMATION* mbi);
+	};
+	
 }
 
 #endif

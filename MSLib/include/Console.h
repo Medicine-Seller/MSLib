@@ -1,18 +1,17 @@
-#include <string>
+#include <Windows.h>
 
 #ifndef CONSOLE_H
 #define CONSOLE_H
 
 namespace ms
 {
-	// Description: Allocate console
-	// [in] title - The console title
-	// Return: True if console is allocated
-	bool ConsoleOpen(std::string title = "Console");
-
-	// Description: Free Console
-	// Return: True if console is freed
-	bool ConsoleClose();
+	class Console
+	{
+	private:
+	public:
+		static BOOL Open(PCSTR title = "Console");
+		static BOOL Close();
+	};
 }
 
 #endif

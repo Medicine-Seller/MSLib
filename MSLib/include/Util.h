@@ -11,37 +11,25 @@
 
 namespace ms
 {
-	// Description: Replace substrings in string
-	// [in] str - Original string
-	// [in] findString - Substring to find
-	// [in] replaceString - Substring to replace
-	// Return: Modified substring
 	std::string ReplaceString(std::string str, std::string findString, std::string replaceString);
+	std::vector<BYTE>StringToBytes(std::string bytesString);
 
-	// Description: Convert hex string into vector of byte
-	// [in] bytesString - String of bytes(hex)
-	// Return: Vector of bytes
-	std::vector<BYTE> StringToBytes(std::string bytesString);
+	MODULEINFO GetModuleInfoEx(HANDLE processHandle, HMODULE moduleHandle);
+	MODULEINFO GetModuleInfo(HMODULE moduleHandle);
 
-	// Description: Generate mask from signature
-	// [in] signature - String of signature
-	// Return: Vector of char
-	std::vector<CHAR> GenerateMask(std::string signature);
+	std::string ConvertWideToAnsi(const std::wstring& wstr);
+	std::wstring ConvertAnsiToWide(const std::string& str);
 
-	// Description: Addition by bytes
-	// [in] address - Pointer to address
-	// [in] offset - Number of bytes to be added
-	// Return: Operated address
+	BOOL IsCurrentProcessActive();
+	VOID GetWindowSize(HWND window, UINT& width, UINT& height);
+	PVOID AllocateMemoryNearAddress(PVOID address, SIZE_T size);
+
 	template<typename DataType>
-	DataType IncrementByByte(DataType address, LONG offset)
+	DataType IncrementByByte(DataType address, LONGLONG offset)
 	{
 		return reinterpret_cast<DataType>(reinterpret_cast<BYTE*>(address) + offset);
 	}
 
-	// Description: Get address from list of offset by dereference
-	// [in] base - Address base
-	// [in] offsets - Vector containing offsets
-	// Return: Address
 	template<typename DataType>
 	DataType GetAddress(uintptr_t base, std::vector<uintptr_t> offsets)
 	{
@@ -53,7 +41,7 @@ namespace ms
 				break;
 			}
 
-			if (i == offsets.size() - 1) //If last offset, don't dereference
+			if (i == offsets.size() - 1)
 				base = (uintptr_t)((BYTE*)base + offsets[i]);
 			else
 				base = *(uintptr_t*)((BYTE*)base + offsets[i]);
@@ -94,9 +82,6 @@ namespace ms
 		return iss.str();
 	}
 
-	MODULEINFO GetModuleInfoEx(HANDLE processHandle, HMODULE moduleHandle);
-	MODULEINFO GetModuleInfo(HMODULE moduleHandle);
-
 	template <typename DataType>
 	std::string ToString(DataType value)
 	{
@@ -105,15 +90,6 @@ namespace ms
 		return ss.str();
 	}
 
-	std::string ReadUnicodeString(uintptr_t* address, size_t size);
-	
-	std::string ConvertWideToAnsi(const std::wstring& wstr);
-	std::wstring ConvertAnsiToWide(const std::string& str);
-	void SendKey(unsigned char key);
-	void SendMouse(long x, long y);
-	void SendMouseRelative(HWND window, int x, int y);
-	bool IsCurrentProcessActive();
-	void GetWindowSize(HWND window, int& width, int& height);
 }
 
 #endif

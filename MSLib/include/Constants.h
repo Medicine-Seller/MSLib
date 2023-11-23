@@ -1,4 +1,3 @@
-#include <string>
 #include <vector>
 
 #pragma warning(disable: 4005)
@@ -10,11 +9,11 @@ namespace ms
 {
 	struct ConstantString
 	{
-		ULONGLONG Value;
-		std::string StringValue;
+		long Value;
+		const char* StringValue;
 	};
 
-#define MS_P(x) {(ULONGLONG)x, #x}
+#define MS_P(x) {(long)x, #x}
 	const std::vector<ConstantString> ConstantsMemoryProtection
 	{
 		MS_P(PAGE_EXECUTE),

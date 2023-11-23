@@ -1,99 +1,88 @@
 #include "Thread.h"
-#include "Macros.h"
+#include "NtApi.h"
 #include <TlHelp32.h>
 #include <Psapi.h>
+#include "Constants.h"
+#include "Util.h"
 
-enum THREADINFOCLASS
+NTSTATUS ms::Thread::GetThreadStartAddress(HANDLE threadHandle, PVOID* threadStartAddress)
 {
-	ThreadQuerySetWin32StartAddress = 9,
-};
-
-typedef NTSTATUS(__stdcall* pfnNtQueryInformationThread)(HANDLE, THREADINFOCLASS, void*, ULONG_PTR, ULONG_PTR*);
-
-ULONG_PTR ms::GetThreadStartAddress(HANDLE threadHandle)
-{
-	HMODULE ntdll = GetModuleHandleA("ntdll.dll");
-	if (!ntdll)
-		return STATUS_INVALID_HANDLE;
-
-	auto NtQueryInformationThread = reinterpret_cast<pfnNtQueryInformationThread>(GetProcAddress(ntdll, "NtQueryInformationThread"));
+	auto NtQueryInformationThread = NtAPI::GetProcedure<NtQueryInformationThread_t>("ntdll.dll", "NtQueryInformationThread");
 	if (!NtQueryInformationThread)
-		return -1;
+		return STATUS_INTERNAL_ERROR;
 
-	ULONG_PTR ulStartAddress = 0;
-	NTSTATUS status = NtQueryInformationThread(threadHandle, ThreadQuerySetWin32StartAddress, &ulStartAddress, sizeof(ULONG_PTR), nullptr);
-
-	if (status)
-		return 0;
-
-	return ulStartAddress;
+	NTSTATUS status = NtQueryInformationThread(threadHandle, ThreadQuerySetWin32StartAddress, &threadStartAddress, sizeof(ULONG_PTR), NULL);
+	return status;
 }
 
-std::vector<HANDLE> ms::GetModuleThreads(LPCWSTR moduleName)
+NTSTATUS ms::Thread::GetModuleThreads(PCSTR moduleName, std::vector<HANDLE>* threadHandles)
 {
-	ULONG dwProcessId = GetCurrentProcessId();
-	HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
-	HMODULE moduleHandle = GetModuleHandle(moduleName);
+	ULONG processId = GetCurrentProcessId();
+	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+	HMODULE module = GetModuleHandleA(moduleName);
 
-	if (!hSnap || !moduleHandle)
-		return {};
+	if (!snapshot || !module)
+		return STATUS_INTERNAL_ERROR;
 
 	THREADENTRY32 threadEntry;
 	threadEntry.dwSize = sizeof(THREADENTRY32);
 
-	if (!Thread32First(hSnap, &threadEntry))
+	if (!Thread32First(snapshot, &threadEntry))
 	{
-		CloseHandle(hSnap);
-		return {};
+		CloseHandle(snapshot);
+		return STATUS_INTERNAL_ERROR;
 	}
 
-	std::vector<HANDLE> vThreadHandles;
-	MODULEINFO modInfo;
-	GetModuleInformation(GetCurrentProcess(), moduleHandle, &modInfo, sizeof(modInfo));
+	MODULEINFO modInfo = GetModuleInfo(module);
 
 	do
 	{
-		if (threadEntry.th32OwnerProcessID != dwProcessId)
+		if (threadEntry.th32OwnerProcessID != processId)
 			continue;
 
 		HANDLE threadHandle = OpenThread(THREAD_ALL_ACCESS, 0, threadEntry.th32ThreadID);
 		if (!threadHandle)
 			continue;
 
-		ULONG_PTR lpThreadStartAddress = GetThreadStartAddress(threadHandle);
-		ULONG_PTR lpModuleBase = reinterpret_cast<ULONG_PTR>(modInfo.lpBaseOfDll);
+		PVOID threadStartAddress;
+		NTSTATUS status = GetThreadStartAddress(threadHandle, &threadStartAddress);
+		if (!SUCCEEDED(status))
+			continue;
 
-		if (lpModuleBase < lpThreadStartAddress && lpThreadStartAddress < lpModuleBase + modInfo.SizeOfImage)
-			vThreadHandles.push_back(threadHandle);
+		uintptr_t startAddress = reinterpret_cast<uintptr_t>(threadStartAddress);
+		uintptr_t moduleBase = reinterpret_cast<uintptr_t>(modInfo.lpBaseOfDll);
 
-	} while (Thread32Next(hSnap, &threadEntry));
+		if (moduleBase < startAddress && startAddress < moduleBase + modInfo.SizeOfImage)
+			threadHandles->push_back(threadHandle);
 
-	CloseHandle(hSnap);
-	return vThreadHandles;
+	} while (Thread32Next(snapshot, &threadEntry));
+
+	CloseHandle(snapshot);
+	return STATUS_SUCCESS;
 }
 
-BOOL ms::ModifyThread(HANDLE threadHandle, THREAD_ACTION actionType)
+BOOL ms::Thread::SetState(HANDLE threadHandle, THREAD_STATE threadState)
 {
-	ULONG dwResult = 0;
-	switch (actionType)
+	DWORD result = 0;
+	switch (threadState)
 	{
-	case THREAD_ACTION::RESUME: dwResult = ResumeThread(threadHandle); break;
-	case THREAD_ACTION::SUSPEND: dwResult = SuspendThread(threadHandle); break;
-	case THREAD_ACTION::TERMINATE: dwResult = TerminateThread(threadHandle, 0); break;
+	case THREAD_STATE::RESUME: result = ResumeThread(threadHandle); break;
+	case THREAD_STATE::SUSPEND: result = SuspendThread(threadHandle); break;
+	case THREAD_STATE::TERMINATE: result = TerminateThread(threadHandle, 0); break;
 	}
 
-	if (dwResult == 0 || dwResult == -1)
+	if (result == 0 || result == -1)
 		return FALSE;
 	
 	return TRUE;
 }
 
-BOOL ms::ModifyThread(std::vector<HANDLE> vThread, THREAD_ACTION actionType)
+BOOL ms::Thread::SetState(std::vector<HANDLE> threadHandles, THREAD_STATE threadState)
 {
-	BOOL bResult = 0;
-	for (auto& threadHandle : vThread)
+	BOOL result = 0;
+	for (auto& threadHandle : threadHandles)
 		if (threadHandle)
-			bResult |= ModifyThread(threadHandle, actionType);
+			result |= SetState(threadHandle, threadState);
 
-	return bResult;
+	return result;
 }

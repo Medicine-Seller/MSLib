@@ -1,73 +1,119 @@
-#include "Macros.h"
 #include "Patch.h"
 #include "VirtualProtect.h"
 #include "Util.h"
+#include "Scan.h"
+#include "Logger.h"
 
-NTSTATUS ms::Patch(uintptr_t* destination, uintptr_t* source, SIZE_T writeSize, std::vector<BYTE> *originalBytes)
+NTSTATUS ms::Patch::PatchBytes(PVOID destination, std::vector<BYTE>* patchBytes, std::vector<BYTE>* originalBytes)
 {
-	NTSTATUS status = PushProtectWrite(destination, writeSize, PAGE_EXECUTE_READWRITE);
-	if (status != STATUS_SUCCESS)
+	NTSTATUS status = VirtualProtect::PushProtectWrite(destination, patchBytes->size(), PAGE_EXECUTE_READWRITE);
+	if (!SUCCEEDED(status))
 		return status;
 
-	if (originalBytes != nullptr)
+	if (originalBytes)
 	{
-		originalBytes->resize(writeSize);
-		memcpy(originalBytes->data(), destination, writeSize);
+		originalBytes->resize(patchBytes->size());
+		memcpy(originalBytes->data(), destination, patchBytes->size());
 	}
-	memcpy(destination, source, writeSize);
 
-	PopProtectWrite();
+	memcpy(destination, patchBytes->data(), patchBytes->size());
+
+	VirtualProtect::PopProtectWrite();
 
 	return STATUS_SUCCESS;
 }
 
-NTSTATUS ms::SPatch::Attach(STOP_CONDITION stopCondition)
+NTSTATUS ms::Patch::Attach(PatchInfo& info)
 {
-	if (IsAttached)
+	if (info.IsAttached)
 		return STATUS_SUCCESS;
 
-	std::vector<CHAR> mask = GenerateMask(Signature);
-	std::vector<BYTE> signature = StringToBytes(ReplaceString(Signature, "?", "0"));
+	NTSTATUS status = PatchBytes(info.Destination, &info.WriteBytes, &info.OriginalBytes);
+	if (!SUCCEEDED(status))
+		return status;
 
-	if (ScannedAddresses.empty())
+	info.IsAttached = TRUE;
+	return STATUS_SUCCESS;
+}
+
+NTSTATUS ms::Patch::Attach(PatchInfoAOB& info, Scan::STOP_CONDITION stopCondition)
+{
+	if (info.IsAttached)
+		return STATUS_SUCCESS;
+
+	if (info.DestinationList.empty())
 	{
-		std::vector<uintptr_t*> vAddrResults = AOBScanModule(signature, mask, ModuleName, stopCondition);
-		if (vAddrResults.empty())
-			return -1;
+		MODULEINFO modInfo = GetModuleInfo(reinterpret_cast<HMODULE>(info.Module));
 
-		for (SIZE_T i = 0; i < vAddrResults.size(); i++)
+		info.DestinationList = Scan::AOBScan(info.Signature, info.Mask, info.Module, modInfo.SizeOfImage, stopCondition);
+
+		if (info.DestinationList.empty())
+			return STATUS_INTERNAL_ERROR;
+
+		for (auto& e : info.DestinationList)
 		{
-			ScannedAddresses.push_back(vAddrResults[i]);
-			ScannedAddresses[i] = IncrementByByte(ScannedAddresses[i], Offset); 
+			uintptr_t* address = reinterpret_cast<uintptr_t*>(e);
+			e = IncrementByByte(address, info.Offset);
 		}
 	}
 
-	std::vector<BYTE> vPatchBytes = StringToBytes(PatchBytes);
-	for (auto& addr : ScannedAddresses)
+	for (auto& address : info.DestinationList)
 	{
-		std::vector<BYTE> vBytesBeforeWrite;
-		NTSTATUS status = Patch(addr, reinterpret_cast<uintptr_t*>(vPatchBytes.data()), vPatchBytes.size(), &vBytesBeforeWrite);
+		std::vector<BYTE> originalBytes;
+		NTSTATUS status = Patch::PatchBytes(address, &info.PatchBytes, &originalBytes);
 		if (status != STATUS_SUCCESS)
 			return status;
 
-		OriginalBytes.push_back(vBytesBeforeWrite);
+		info.OriginalBytesList.push_back(originalBytes);
 	}
 
-	IsAttached = TRUE;
+	info.IsAttached = TRUE;
 	return STATUS_SUCCESS;
 }
 
-VOID ms::SPatch::Detach()
+NTSTATUS ms::Patch::Attach(PatchInfoAOBString& info, Scan::STOP_CONDITION stopCondition)
 {
-	if (!IsAttached || ScannedAddresses.empty())
-		return;
-
-	for (SIZE_T i = 0; i < ScannedAddresses.size(); i++)
+	if (info.DestinationList.empty())
 	{
-		Patch(ScannedAddresses[i], reinterpret_cast<uintptr_t*>(OriginalBytes[i].data()), OriginalBytes[i].size(), nullptr);
-		OriginalBytes[i].clear();
+		info.Mask = Scan::CreateMask(info.SignatureString);
+		info.Signature = Scan::CreateSignature(info.SignatureString);
+		info.Module = GetModuleHandleA(info.ModuleString.c_str());
+		info.PatchBytes = StringToBytes(info.PatchBytesString);
 	}
 
-	OriginalBytes.clear();
-	IsAttached = FALSE;
+	PatchInfoAOB& patchInfoAOB = info;
+	return Attach(patchInfoAOB, stopCondition);
+}
+
+NTSTATUS ms::Patch::Detach(PatchInfo& info)
+{
+	if (!info.IsAttached)
+		return STATUS_SUCCESS;
+
+	NTSTATUS status = PatchBytes(info.Destination, &info.OriginalBytes, NULL);
+	if (!SUCCEEDED(status))
+		return status;
+
+	info.OriginalBytes.clear();
+	info.IsAttached = FALSE;
+	return STATUS_SUCCESS;
+}
+
+NTSTATUS ms::Patch::Detach(PatchAOBBase& info)
+{
+	if (!info.IsAttached || info.DestinationList.empty())
+		return STATUS_SUCCESS;
+
+	for (SIZE_T i = 0; i < info.DestinationList.size(); i++)
+	{
+		NTSTATUS status = Patch::PatchBytes(info.DestinationList[i], &info.OriginalBytesList[i], NULL);
+		if (!SUCCEEDED(status))
+			return status;
+
+		info.OriginalBytesList[i].clear();
+	}
+
+	info.OriginalBytesList.clear();
+	info.IsAttached = FALSE;
+	return STATUS_SUCCESS;
 }

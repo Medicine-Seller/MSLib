@@ -1,3 +1,6 @@
+#include <Windows.h>
+#include <vector>
+#include <string>
 #include "Scan.h"
 
 #ifndef PATCH_H
@@ -5,35 +8,50 @@
 
 namespace ms
 {
-	struct SPatch
+	class Patch
 	{
-		std::string Name;								// Name of the structure
-		std::string ModuleName;						// Name of module at which the signature will be scanned for
-		std::string Signature;						// Signature/pattern of bytes(hex) to be scanned
-		std::string PatchBytes;						// Bytes(hex) to write
-		LONG Offset = 0;								// Offset adjustment after signature found
-		std::vector<uintptr_t*> ScannedAddresses;
-		std::vector<std::vector<BYTE>> OriginalBytes;
+	private:
 
-		BOOL IsAttached = false;
+		struct PatchAOBBase
+		{
+			std::vector<BYTE> PatchBytes;
+			LONG Offset;
+			BOOL IsAttached = FALSE;
+			std::vector<PVOID> DestinationList;
+			std::vector<std::vector<BYTE>> OriginalBytesList;
+		};
 
-		// Description: Apply patch
-		// [in] stopCondition - Stop condition for patch
-		// Return: True if success
-		NTSTATUS Attach(STOP_CONDITION stopCondition = STOP_CONDITION::FIRST_RESULT);
+	public:
 
-		// Description: Restore patch
-		VOID Detach();
+		struct PatchInfo
+		{
+			PVOID Destination;
+			std::vector<BYTE> WriteBytes;
+			BOOL IsAttached = FALSE;
+			std::vector<BYTE> OriginalBytes;
+		};
+
+		struct PatchInfoAOB : PatchAOBBase
+		{
+			std::vector<BYTE> Signature;
+			std::vector<CHAR> Mask;
+			PVOID Module;
+		};
+
+		struct PatchInfoAOBString : PatchInfoAOB
+		{
+			std::string SignatureString;
+			std::string ModuleString;
+			std::string PatchBytesString;
+		};
+
+		static NTSTATUS Attach(PatchInfo& info);
+		static NTSTATUS Attach(PatchInfoAOB& info, Scan::STOP_CONDITION patchType = Scan::STOP_CONDITION::FIRST_RESULT);
+		static NTSTATUS Attach(PatchInfoAOBString& info, Scan::STOP_CONDITION patchType = Scan::STOP_CONDITION::FIRST_RESULT);
+		static NTSTATUS Detach(PatchInfo& info);
+		static NTSTATUS Detach(PatchAOBBase& info);
+		static NTSTATUS PatchBytes(PVOID destination, std::vector<BYTE>* patchBytes, std::vector<BYTE>* originalBytes);
 	};
-
-
-	// Description: Patch at destination with bytes
-	// [in] destination - Pointer to destination
-	// [in] source - Pointer to patch bytes
-	// [in] writeSize - Number of bytes to write
-	// [in] bKeepOldBytes - Define whether to keep original bytes
-	// Return: Return overwrriten bytes if bKeepOldBytes is true, else return empty vector
-	NTSTATUS Patch(uintptr_t* destination, uintptr_t* source, SIZE_T writeSize, std::vector<BYTE>* originalBytes);
 }
 
 #endif
