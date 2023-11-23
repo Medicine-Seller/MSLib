@@ -1,6 +1,4 @@
-#include <iostream>
 #include <string>
-#include <cstdarg>
 
 #ifndef MSLOGGER_H
 #define MSLOGGER_H

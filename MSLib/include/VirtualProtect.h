@@ -6,23 +6,36 @@
 
 namespace ms
 {
-	struct SProtect
+	class VirtualProtect
 	{
-		uintptr_t* Address;
-		SIZE_T WriteSize;
-		ULONG OriginalProtect;
+	private:
+		struct Protection
+		{
+			PVOID Address;
+			SIZE_T WriteSize;
+			ULONG OriginalProtect;
+		};
+
+		static std::vector<Protection> ProtectionList;
+
+	public:
+
+
+		static NTSTATUS PushProtectWriteEx(HANDLE processHandle, PVOID address, SIZE_T writeSize, ULONG newProtect);
+		static NTSTATUS PushProtectWrite(PVOID address, SIZE_T writeSize, ULONG newProtect);
+
+		static NTSTATUS PopProtectWriteEx(HANDLE processHandle);
+		static NTSTATUS PopProtectWrite();
+
+		static VOID RestoreAllWritablesEx(HANDLE processHandle);
+		static VOID RestoreAllWritables();
+
+		static NTSTATUS SetProtectVirtualMemoryModuleEx(HANDLE processHandle, HMODULE moduleHandle, ULONG newProtect);
+		static NTSTATUS SetProtectVirtualMemoryModule(HMODULE moduleHandle, ULONG newProtect);
+		static NTSTATUS SetProtectVirtualMemoryEx(HANDLE processHandle, PVOID baseAddress, SIZE_T regionSize, ULONG newProtect, ULONG* oldProtect);
+		static NTSTATUS SetProtectVirtualMemory(PVOID baseAddress, SIZE_T regionSize, ULONG newProtect, ULONG* oldProtect);
 	};
-
-	static std::vector<SProtect> ProtectList;
-
-	NTSTATUS PushProtectWriteEx(HANDLE processHandle, uintptr_t* address, SIZE_T writeSize, ULONG newProtect);
-	NTSTATUS PushProtectWrite(uintptr_t* address, SIZE_T writeSize, ULONG newProtect);
-
-	NTSTATUS PopProtectWriteEx(HANDLE processHandle);
-	NTSTATUS PopProtectWrite();
-
-	VOID RestoreAllWritablesEx(HANDLE processHandle);
-	VOID RestoreAllWritables();
+	
 }
 
 #endif

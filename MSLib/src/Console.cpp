@@ -2,20 +2,22 @@
 #include <Windows.h>
 #include <iostream>
 
-bool ms::ConsoleOpen(std::string title)
+BOOL ms::Console::Open(PCSTR title)
 {
 	if (!AllocConsole())
-		return false;
+		return FALSE;
 
-	SetConsoleTitleA(title.c_str());
+	if (!SetConsoleTitleA(title))
+		return FALSE;
+
 	FILE* newstreamptr;
 	freopen_s(&newstreamptr, "CONIN$", "r", stdin);
 	freopen_s(&newstreamptr, "CONOUT$", "w", stdout);
 	freopen_s(&newstreamptr, "CONOUT$", "w", stderr);
-	return true;
+	return TRUE;
 }
 
-bool ms::ConsoleClose()
+BOOL ms::Console::Close()
 {
 	return FreeConsole();
 }
