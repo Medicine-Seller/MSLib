@@ -17,14 +17,14 @@ const std::vector<BYTE>ms::Detour::ShellCode_JumpRelative
 
 const std::vector<BYTE>ms::Detour::ShellCode_Detour
 {
-	0x50,											// push rax
-	0x48, 0xB8,										// mov rax,...
+	0x41, 0x57,										// push r15
+	0x49, 0xBF,										// mov r15,...
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 
-	0x50,                                           // push rax
-	0x48, 0x8B, 0x44, 0x24, 0x08,                   // mov rax,[rsp+8]
+	0x41, 0x57,                                     // push r15
+	0x4C, 0x8B, 0x7C, 0x24, 0x08,                   // mov r15,[rsp+8]
 	0xFF, 0x25, 0x00, 0x00, 0x00, 0x00,				// jmp ...
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 
-	0x58,											// pop rax
+	0x41, 0x5F,										// pop r15
 };
 
 NTSTATUS ms::Detour::CreateDetour(
@@ -43,7 +43,6 @@ NTSTATUS ms::Detour::CreateDetour(
 	SIZE_T detourSize = ShellCode_Detour.size() + ShellCode_JumpAbsolute.size() + writeSize;
 	*allocatedMemory = AllocateMemoryNearAddress(source, detourSize);
 	PVOID allocation = *allocatedMemory;
-
 	if (!allocation)
 		return STATUS_INTERNAL_ERROR;
 
@@ -64,16 +63,20 @@ NTSTATUS ms::Detour::CreateDetour(
 	std::vector<BYTE>detour = ShellCode_Detour;
 	std::vector<BYTE>returnToOriginal = ShellCode_JumpAbsolute;
 
-	*reinterpret_cast<uintptr_t*>(detour.data() + 3) = reinterpret_cast<uintptr_t>(allocation) + ShellCode_Detour.size() - 1;
-	*reinterpret_cast<uintptr_t*>(detour.data() + 23) = reinterpret_cast<uintptr_t>(destination);
+	*reinterpret_cast<uintptr_t*>(detour.data() + 4) = reinterpret_cast<uintptr_t>(allocation) + ShellCode_Detour.size()-2;
+	*reinterpret_cast<uintptr_t*>(detour.data() + 25) = reinterpret_cast<uintptr_t>(destination);
 	*reinterpret_cast<uintptr_t*>(returnToOriginal.data() + 6) = reinterpret_cast<uintptr_t>(source) + writeSize;
 
 	memcpy(allocation, detour.data(), detour.size());
 
-	void* detourReturnAddress = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(allocation) + detour.size());
-	memcpy(detourReturnAddress, returnToOriginal.data(), returnToOriginal.size());
+	PVOID detourOriginalOffset = IncrementByByte(allocation, detour.size());
+	memcpy(detourOriginalOffset, source, writeSize);
+
+	PVOID detourReturnOffset = IncrementByByte(allocation, detour.size() + writeSize);
+	memcpy(detourReturnOffset, returnToOriginal.data(), returnToOriginal.size());
 
 	NTSTATUS status = Patch::PatchBytes(source, &jmpToDetour, originalBytes ? originalBytes : NULL);
+
 	return status;
 }
 

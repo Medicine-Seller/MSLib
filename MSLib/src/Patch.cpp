@@ -19,8 +19,15 @@ NTSTATUS ms::Patch::PatchBytes(PVOID destination, std::vector<BYTE>* patchBytes,
 	memcpy(destination, patchBytes->data(), patchBytes->size());
 
 	VirtualProtect::PopProtectWrite();
-
 	return STATUS_SUCCESS;
+}
+
+NTSTATUS ms::Patch::PatchBytes(PVOID destination, PVOID source, SIZE_T size, std::vector<BYTE>* originalBytes)
+{
+	std::vector<BYTE> patchBytes(size, 0x0);
+	memcpy(patchBytes.data(), source, size);
+
+	return PatchBytes(destination, &patchBytes, originalBytes);
 }
 
 NTSTATUS ms::Patch::Attach(PatchInfo& info)

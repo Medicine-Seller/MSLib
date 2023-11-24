@@ -29,6 +29,7 @@ UINT ms::Input::SendKey(const BYTE key)
 
 	Device.ki.dwFlags = KEYEVENTF_KEYUP;
 	result += SendInput(1, &Device, sizeof(INPUT));
+	return result;
 }
 
 UINT ms::Input::SendMouseMove(const LONG x, const LONG y)
