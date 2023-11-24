@@ -18,10 +18,10 @@ namespace ms
 			TERMINATE
 		};
 
-		NTSTATUS GetThreadStartAddress(HANDLE threadHandle, PVOID* threadStartAddress);
-		NTSTATUS GetModuleThreads(PCSTR moduleName, std::vector<HANDLE>* threadHandles);
-		BOOL SetState(HANDLE threadHandle, THREAD_STATE threadState);
-		BOOL SetState(std::vector<HANDLE> threadHandles, THREAD_STATE threadState);
+		static NTSTATUS GetThreadStartAddress(HANDLE threadHandle, PVOID* threadStartAddress);
+		static NTSTATUS GetModuleThreads(PCSTR moduleName, std::vector<HANDLE>* threadHandles);
+		static BOOL SetState(HANDLE threadHandle, THREAD_STATE threadState);
+		static BOOL SetState(std::vector<HANDLE> threadHandles, THREAD_STATE threadState);
 	};
 }
 

@@ -1,21 +1,23 @@
-#include "../MSLib/include/Input.h"
+#include "../MSLib/include/MSLib.h"
 #pragma comment(lib, "../x64/Release/MSLib.lib")
 #include <iostream>
 
 int main()
 {
-	ms::Input test(INPUT_MOUSE);
-	for (int i = 3; i > 0; i--)
+	std::string input;
+	while (input != "exit")
 	{
-		printf("Sending key in %ds...\n", i);
-		Sleep(1000);
-	}
+		std::cin >> input;
+		if (input == "test")
+		{
+			std::vector<PVOID> threads;
+			NTSTATUS status = ms::Thread::GetModuleThreads("ntdll.dll", &threads);
+			LogLine("GetModuleThread status - %llx\n", status);
+			LogLine("Thread size - %d\n", threads.size());
 
-	for (int i = 3; i > 0; i--)
-	{
-		printf("Sent\n");
-		test.SendMouseClick(1000,1000);
-		Sleep(1000);
+			status = ms::Thread::SetState(threads, ms::Thread::THREAD_STATE::SUSPEND);
+			LogLine("SetState status - %llx\n", status);
+		}
 	}
 
 	return 0;

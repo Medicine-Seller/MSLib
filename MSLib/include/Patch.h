@@ -51,6 +51,7 @@ namespace ms
 		static NTSTATUS Detach(PatchInfo& info);
 		static NTSTATUS Detach(PatchAOBBase& info);
 		static NTSTATUS PatchBytes(PVOID destination, std::vector<BYTE>* patchBytes, std::vector<BYTE>* originalBytes);
+		static NTSTATUS PatchBytes(PVOID destination, PVOID source, SIZE_T size, std::vector<BYTE>* originalBytes);
 	};
 }
 
