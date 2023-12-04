@@ -19,8 +19,6 @@ namespace ms
 		static std::vector<Protection> ProtectionList;
 
 	public:
-
-
 		static NTSTATUS PushProtectWriteEx(HANDLE processHandle, PVOID address, SIZE_T writeSize, ULONG newProtect);
 		static NTSTATUS PushProtectWrite(PVOID address, SIZE_T writeSize, ULONG newProtect);
 

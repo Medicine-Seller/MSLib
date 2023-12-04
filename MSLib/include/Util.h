@@ -89,7 +89,6 @@ namespace ms
 		ss << value;
 		return ss.str();
 	}
-
 }
 
 #endif
