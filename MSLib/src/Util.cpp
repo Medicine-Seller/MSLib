@@ -86,7 +86,6 @@ PVOID ms::AllocateMemoryNearAddress(PVOID address, SIZE_T size)
 	const uintptr_t range = 0x7FFF0000;
 
 	uintptr_t base = reinterpret_cast<uintptr_t>(address);
-	//uintptr_t start = (base > range) ? (base - range) : 0;
 	uintptr_t end = base + range;
 
 	PVOID allocatedAddress = NULL;
