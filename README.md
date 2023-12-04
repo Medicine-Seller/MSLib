@@ -1,6 +1,6 @@
 # MSLib
 
-C++ Windows x64 Library
+C++ Windows x64 Memory Library
 
 ##
 Functionality:
