@@ -49,12 +49,12 @@ namespace ms
 		};
 
 		static NTSTATUS CreateDetour(
-			PVOID source,
-			PVOID destination,
+			const PVOID source,
+			const PVOID destination,
 			PVOID* allocatedMemory,
-			SIZE_T writeSize,
+			const SIZE_T writeSize,
 			std::vector<BYTE>* originalBytes,
-			Type jumpType = Type::JMP_RELATIVE);
+			const Type jumpType = Type::JMP_RELATIVE);
 
 		static NTSTATUS Attach(DetourInfo& info, Type jumpType = Type::JMP_RELATIVE);
 		static NTSTATUS Attach(DetourInfoAOB& info, Type jumpType = Type::JMP_RELATIVE);

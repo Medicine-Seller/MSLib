@@ -12,26 +12,26 @@
 namespace ms
 {
 	std::string ReplaceString(std::string str, std::string findString, std::string replaceString);
-	std::vector<BYTE>StringToBytes(std::string bytesString);
+	std::vector<BYTE>StringToBytes(const std::string bytesString);
 
-	MODULEINFO GetModuleInfoEx(HANDLE processHandle, HMODULE moduleHandle);
-	MODULEINFO GetModuleInfo(HMODULE moduleHandle);
+	MODULEINFO GetModuleInfoEx(const HANDLE processHandle, const HMODULE moduleHandle);
+	MODULEINFO GetModuleInfo(const HMODULE moduleHandle);
 
 	std::string ConvertWideToAnsi(const std::wstring& wstr);
 	std::wstring ConvertAnsiToWide(const std::string& str);
 
 	BOOL IsCurrentProcessActive();
-	VOID GetWindowSize(HWND window, UINT& width, UINT& height);
-	PVOID AllocateMemoryNearAddress(PVOID address, SIZE_T size);
+	VOID GetWindowSize(const HWND window, UINT& width, UINT& height);
+	PVOID AllocateMemoryNearAddress(const PVOID address, const SIZE_T size);
 
 	template<typename DataType>
-	DataType IncrementByByte(DataType address, LONGLONG offset)
+	DataType IncrementByByte(const DataType address, const LONGLONG offset)
 	{
 		return reinterpret_cast<DataType>(reinterpret_cast<BYTE*>(address) + offset);
 	}
 
 	template<typename DataType>
-	DataType GetAddress(uintptr_t base, std::vector<uintptr_t> offsets)
+	DataType GetAddress(const uintptr_t base, const std::vector<uintptr_t> offsets)
 	{
 		for (unsigned int i = 0; i < offsets.size(); i++)
 		{
@@ -51,7 +51,7 @@ namespace ms
 	}
 
 	template <typename DataType = ULONG>
-	DataType GetConstant(const std::vector<ConstantString>& constantStrings, std::string str)
+	DataType GetConstant(const std::vector<ConstantString>& constantStrings, const std::string str)
 	{
 		for (auto& e : constantStrings)
 			if (e.StringValue == str)
@@ -61,7 +61,7 @@ namespace ms
 	}
 
 	template<typename DataType>
-	std::string GetConstantString(const std::vector<ConstantString>& constantStrings, DataType value)
+	std::string GetConstantString(const std::vector<ConstantString>& constantStrings, const DataType value)
 	{
 		ULONGLONG constantValue = static_cast<ULONGLONG>(value);
 		constantValue <= 32;
@@ -83,7 +83,7 @@ namespace ms
 	}
 
 	template <typename DataType>
-	std::string ToString(DataType value)
+	std::string ToString(const DataType value)
 	{
 		std::stringstream ss;
 		ss << value;

@@ -5,7 +5,7 @@ ms::Input::Input()
 	Input(0);
 }
 
-ms::Input::Input(BYTE inputType)
+ms::Input::Input(const BYTE inputType)
 {
 	memset(&Device, 0, sizeof(Device));
 	switch (inputType)
@@ -59,7 +59,7 @@ UINT ms::Input::SendMouseClick(const LONG x, const LONG y)
 	return result;
 }
 
-UINT ms::Input::SendMouseClickRelative(HWND& window, const LONG x, const LONG y)
+UINT ms::Input::SendMouseClickRelative(const HWND& window, const LONG x, const LONG y)
 {
 	RECT clientWindow;
 	if (!GetClientRect(window, &clientWindow))

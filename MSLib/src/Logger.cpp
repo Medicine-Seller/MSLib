@@ -1,7 +1,7 @@
 #include "Logger.h"
 #include <cstdarg>
 
-void ms::Log(std::string fileDirectory, unsigned int line, const char* format, ...)
+void ms::Log(const std::string fileDirectory, const unsigned int line, const char* format, ...)
 {
 	std::string fileName;
 	size_t found = fileDirectory.find_last_of("/\\");

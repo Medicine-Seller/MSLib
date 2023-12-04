@@ -5,7 +5,7 @@
 #include "Constants.h"
 #include "Util.h"
 
-NTSTATUS ms::Thread::GetThreadStartAddress(HANDLE threadHandle, PVOID* threadStartAddress)
+NTSTATUS ms::Thread::GetThreadStartAddress(const HANDLE threadHandle, PVOID* threadStartAddress)
 {
 	auto NtQueryInformationThread = NtAPI::GetProcedure<NtQueryInformationThread_t>("ntdll.dll", "NtQueryInformationThread");
 	if (!NtQueryInformationThread)
@@ -63,7 +63,7 @@ NTSTATUS ms::Thread::GetModuleThreads(PCSTR moduleName, std::vector<HANDLE>* thr
 	return STATUS_SUCCESS;
 }
 
-BOOL ms::Thread::SetState(HANDLE threadHandle, THREAD_STATE threadState)
+BOOL ms::Thread::SetThreadState(const HANDLE threadHandle, const THREAD_STATE threadState)
 {
 	DWORD result = 0;
 	switch (threadState)
@@ -79,12 +79,16 @@ BOOL ms::Thread::SetState(HANDLE threadHandle, THREAD_STATE threadState)
 	return TRUE;
 }
 
-BOOL ms::Thread::SetState(std::vector<HANDLE> threadHandles, THREAD_STATE threadState)
+BOOL ms::Thread::SetThreadState(const std::vector<HANDLE>* threadHandles, const THREAD_STATE threadState)
 {
 	BOOL result = 0;
-	for (auto& threadHandle : threadHandles)
+
+	if (!threadHandles)
+		return result;
+
+	for (auto& threadHandle : *threadHandles)
 		if (threadHandle)
-			result |= SetState(threadHandle, threadState);
+			result |= SetThreadState(threadHandle, threadState);
 
 	return result;
 }

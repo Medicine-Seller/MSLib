@@ -4,7 +4,7 @@
 #include "Scan.h"
 #include "Logger.h"
 
-NTSTATUS ms::Patch::PatchBytes(PVOID destination, std::vector<BYTE>* patchBytes, std::vector<BYTE>* originalBytes)
+NTSTATUS ms::Patch::PatchBytes(const PVOID destination, const std::vector<BYTE>* patchBytes, std::vector<BYTE>* originalBytes)
 {
 	NTSTATUS status = VirtualProtect::PushProtectWrite(destination, patchBytes->size(), PAGE_EXECUTE_READWRITE);
 	if (!SUCCEEDED(status))
@@ -22,7 +22,7 @@ NTSTATUS ms::Patch::PatchBytes(PVOID destination, std::vector<BYTE>* patchBytes,
 	return STATUS_SUCCESS;
 }
 
-NTSTATUS ms::Patch::PatchBytes(PVOID destination, PVOID source, SIZE_T size, std::vector<BYTE>* originalBytes)
+NTSTATUS ms::Patch::PatchBytes(const PVOID destination, const PVOID source, const SIZE_T size, std::vector<BYTE>* originalBytes)
 {
 	std::vector<BYTE> patchBytes(size, 0x0);
 	memcpy(patchBytes.data(), source, size);
@@ -43,7 +43,7 @@ NTSTATUS ms::Patch::Attach(PatchInfo& info)
 	return STATUS_SUCCESS;
 }
 
-NTSTATUS ms::Patch::Attach(PatchInfoAOB& info, Scan::STOP_CONDITION stopCondition)
+NTSTATUS ms::Patch::Attach(PatchInfoAOB& info, const Scan::STOP_CONDITION stopCondition)
 {
 	if (info.IsAttached)
 		return STATUS_SUCCESS;
@@ -78,7 +78,7 @@ NTSTATUS ms::Patch::Attach(PatchInfoAOB& info, Scan::STOP_CONDITION stopConditio
 	return STATUS_SUCCESS;
 }
 
-NTSTATUS ms::Patch::Attach(PatchInfoAOBString& info, Scan::STOP_CONDITION stopCondition)
+NTSTATUS ms::Patch::Attach(PatchInfoAOBString& info, const Scan::STOP_CONDITION stopCondition)
 {
 	if (info.DestinationList.empty())
 	{
