@@ -11,11 +11,11 @@ namespace ms
 		INPUT Device;
 	public:
 		Input();
-		Input(BYTE inputType);
+		Input(const BYTE inputType);
 		UINT SendKey(const BYTE key);
 		UINT SendMouseMove(const LONG x, const LONG y);
 		UINT SendMouseClick(const LONG x, const LONG y);
-		UINT SendMouseClickRelative(HWND& window, const LONG x, const LONG y);
+		UINT SendMouseClickRelative(const HWND& window, const LONG x, const LONG y);
 	};
 
 }

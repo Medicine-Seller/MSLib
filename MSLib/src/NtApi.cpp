@@ -3,7 +3,7 @@
 #include "Util.h"
 #include "Macros.h"
 
-NTSTATUS ms::NtAPI::GetVirtualMemoryInfoEx(HANDLE processHandle, PVOID baseAddress, MEMORY_BASIC_INFORMATION* mbi)
+NTSTATUS ms::NtAPI::GetVirtualMemoryInfoEx(const HANDLE processHandle, const PVOID baseAddress, MEMORY_BASIC_INFORMATION* mbi)
 {
     if (!mbi)
         return STATUS_INTERNAL_ERROR;
@@ -17,12 +17,12 @@ NTSTATUS ms::NtAPI::GetVirtualMemoryInfoEx(HANDLE processHandle, PVOID baseAddre
     return status;
 }
 
-NTSTATUS ms::NtAPI::GetVirtualMemoryInfo(PVOID baseAddress, MEMORY_BASIC_INFORMATION* mbi)
+NTSTATUS ms::NtAPI::GetVirtualMemoryInfo(const PVOID baseAddress, MEMORY_BASIC_INFORMATION* mbi)
 {
     return GetVirtualMemoryInfoEx(GetCurrentProcess(), baseAddress, mbi);
 }
 
-NTSTATUS ms::NtAPI::QuerySystemInformation(SYSTEM_INFORMATION_CLASS systemInformationClass, PVOID systemInformation, ULONG systemInformationLength, ULONG* returnLength)
+NTSTATUS ms::NtAPI::QuerySystemInformation(const SYSTEM_INFORMATION_CLASS systemInformationClass, PVOID systemInformation, const ULONG systemInformationLength, ULONG* returnLength)
 {
     auto NtQuerySystemInformation = GetProcedure<NtQuerySystemInformation_t>("ntdll.dll", "NtQuerySystemInformation");
     if (!NtQuerySystemInformation)

@@ -9,7 +9,7 @@ std::string ms::ReplaceString(std::string str, std::string findString, std::stri
 	return str;
 }
 
-std::vector<BYTE>ms::StringToBytes(std::string bytesString)
+std::vector<BYTE>ms::StringToBytes(const std::string bytesString)
 {
 	std::istringstream iss(bytesString);
 	std::vector<BYTE> bytes;
@@ -21,14 +21,14 @@ std::vector<BYTE>ms::StringToBytes(std::string bytesString)
 	return bytes;
 }
 
-MODULEINFO ms::GetModuleInfoEx(HANDLE processHandle, HMODULE moduleHandle)
+MODULEINFO ms::GetModuleInfoEx(const HANDLE processHandle, const HMODULE moduleHandle)
 {
 	MODULEINFO modInfo;
 	GetModuleInformation(processHandle, moduleHandle, &modInfo, sizeof(modInfo));
 	return modInfo;
 }
 
-MODULEINFO ms::GetModuleInfo(HMODULE moduleHandle)
+MODULEINFO ms::GetModuleInfo(const HMODULE moduleHandle)
 {
 	return GetModuleInfoEx(GetCurrentProcess(), moduleHandle);
 }
@@ -66,7 +66,7 @@ BOOL ms::IsCurrentProcessActive()
 	return TRUE;
 }
 
-VOID ms::GetWindowSize(HWND window, UINT& width, UINT& height)
+VOID ms::GetWindowSize(const HWND window, UINT& width, UINT& height)
 {
 	RECT clientRect;
 	GetClientRect(window, &clientRect);
@@ -81,7 +81,7 @@ VOID ms::GetWindowSize(HWND window, UINT& width, UINT& height)
 	height = lowerRight.y - upperLeft.y;
 }
 
-PVOID ms::AllocateMemoryNearAddress(PVOID address, SIZE_T size) 
+PVOID ms::AllocateMemoryNearAddress(const PVOID address, const SIZE_T size)
 {
 	const uintptr_t range = 0x7FFF0000;
 

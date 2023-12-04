@@ -19,13 +19,13 @@ namespace ms
 			NONE
 		};
 
-		static std::vector<BYTE> CreateSignature(std::string signatureString);
-		static BOOL IsSignatureMatch(PVOID address, std::vector<BYTE>& signature, std::vector<CHAR>& mask);
-		static VOID ScanBytes(std::vector<PVOID>* addressResults, std::vector<BYTE>& signatureBytes, std::vector<CHAR>& mask, PVOID region, SIZE_T moduleSize, STOP_CONDITION stopCondition);
-		static std::vector<PVOID> AOBScan(std::vector<BYTE>& signature, std::vector<CHAR>& mask, PVOID moduleBase, SIZE_T moduleSize, STOP_CONDITION stopCondition = STOP_CONDITION::FIRST_RESULT);
-		static std::vector<PVOID> AOBScan(std::vector<BYTE>& signature, std::vector<CHAR>& mask, std::string moduleName, STOP_CONDITION stopCondition = STOP_CONDITION::FIRST_RESULT);
-		static std::vector<PVOID> AOBScan(std::string signatureString, std::string moduleName, STOP_CONDITION stopCondition = STOP_CONDITION::FIRST_RESULT);
-		static std::vector<CHAR> CreateMask(std::string signatureString);
+		static std::vector<BYTE> CreateSignature(const std::string signatureString);
+		static BOOL IsSignatureMatch(const PVOID address, const std::vector<BYTE>& signature, const std::vector<CHAR>& mask);
+		static VOID ScanBytes(std::vector<PVOID>* addressResults, const std::vector<BYTE>& signature, const std::vector<CHAR>& mask, const PVOID region, const SIZE_T moduleSize, const STOP_CONDITION stopCondition);
+		static std::vector<PVOID> AOBScan(const std::vector<BYTE>& signature, const std::vector<CHAR>& mask, const PVOID moduleBase, const SIZE_T moduleSize, const STOP_CONDITION stopCondition = STOP_CONDITION::FIRST_RESULT);
+		static std::vector<PVOID> AOBScan(const std::vector<BYTE>& signature, const std::vector<CHAR>& mask, const std::string moduleName, const STOP_CONDITION stopCondition = STOP_CONDITION::FIRST_RESULT);
+		static std::vector<PVOID> AOBScan(const std::string signatureString, const std::string moduleName, const STOP_CONDITION stopCondition = STOP_CONDITION::FIRST_RESULT);
+		static std::vector<CHAR> CreateMask(const std::string signatureString);
 	};
 
 }

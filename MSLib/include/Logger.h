@@ -5,7 +5,7 @@
 
 namespace ms
 {
-	void Log(std::string fileDirectory, unsigned int line, const char* format, ...);
+	void Log(const std::string fileDirectory, const unsigned int line, const char* format, ...);
 }
 
 #define LogLine(x, ...) ms::Log(__FILE__, __LINE__, x, __VA_ARGS__);

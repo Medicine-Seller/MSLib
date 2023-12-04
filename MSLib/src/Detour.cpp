@@ -28,12 +28,12 @@ const std::vector<BYTE>ms::Detour::ShellCode_Detour
 };
 
 NTSTATUS ms::Detour::CreateDetour(
-	PVOID source,
-	PVOID destination,
+	const PVOID source,
+	const PVOID destination,
 	PVOID* allocatedMemory,
-	SIZE_T writeSize,
+	const SIZE_T writeSize,
 	std::vector<BYTE>* originalBytes,
-	Type jumpType)
+	const Type jumpType)
 {
 	if (jumpType == Type::JMP_ABSOLUTE && writeSize < 14)
 		return STATUS_INTERNAL_ERROR;

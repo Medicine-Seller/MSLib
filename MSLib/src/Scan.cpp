@@ -3,7 +3,7 @@
 #include <Psapi.h>
 #include "Logger.h"
 
-BOOL ms::Scan::IsSignatureMatch(PVOID address, std::vector<BYTE>& signature, std::vector<CHAR>& mask)
+BOOL ms::Scan::IsSignatureMatch(const PVOID address, const std::vector<BYTE>& signature, const std::vector<CHAR>& mask)
 {
 	BOOL IsSignatureMatch = TRUE;
 	for (SIZE_T i = 0; i < mask.size(); i++)
@@ -18,7 +18,7 @@ BOOL ms::Scan::IsSignatureMatch(PVOID address, std::vector<BYTE>& signature, std
 	return IsSignatureMatch;
 }
 
-VOID ms::Scan::ScanBytes(std::vector<PVOID>* addressResults, std::vector<BYTE>& signature, std::vector<CHAR>& mask, PVOID region, SIZE_T moduleSize , STOP_CONDITION stopCondition)
+VOID ms::Scan::ScanBytes(std::vector<PVOID>* addressResults, const std::vector<BYTE>& signature, const std::vector<CHAR>& mask, const PVOID region, const SIZE_T moduleSize, const STOP_CONDITION stopCondition)
 {
 	for (ULONG Offset = 0; Offset < moduleSize; Offset++)
 	{
@@ -33,7 +33,7 @@ VOID ms::Scan::ScanBytes(std::vector<PVOID>* addressResults, std::vector<BYTE>& 
 	}
 }
 
-std::vector<PVOID> ms::Scan::AOBScan(std::vector<BYTE>& signature, std::vector<CHAR>& mask, PVOID moduleBase, SIZE_T moduleSize, STOP_CONDITION stopCondition)
+std::vector<PVOID> ms::Scan::AOBScan(const std::vector<BYTE>& signature, const std::vector<CHAR>& mask, const PVOID moduleBase, const SIZE_T moduleSize, const STOP_CONDITION stopCondition)
 {
 	MEMORY_BASIC_INFORMATION mbi;
 	std::vector<PVOID> addressResults;
@@ -57,7 +57,7 @@ std::vector<PVOID> ms::Scan::AOBScan(std::vector<BYTE>& signature, std::vector<C
 	return addressResults;
 }
 
-std::vector<PVOID> ms::Scan::AOBScan(std::vector<BYTE>& signature, std::vector<CHAR>& mask, std::string moduleName, STOP_CONDITION stopCondition)
+std::vector<PVOID> ms::Scan::AOBScan(const std::vector<BYTE>& signature, const std::vector<CHAR>& mask, const std::string moduleName, const STOP_CONDITION stopCondition)
 {
 	HMODULE moduleHandle = GetModuleHandleA(moduleName.c_str());
 	if (!moduleHandle)
@@ -68,7 +68,7 @@ std::vector<PVOID> ms::Scan::AOBScan(std::vector<BYTE>& signature, std::vector<C
 	return AOBScan(signature, mask, ModInfo.lpBaseOfDll, ModInfo.SizeOfImage, stopCondition);
 }
 
-std::vector<PVOID> ms::Scan::AOBScan(std::string signatureString, std::string moduleName, STOP_CONDITION stopCondition)
+std::vector<PVOID> ms::Scan::AOBScan(const std::string signatureString, const std::string moduleName, const STOP_CONDITION stopCondition)
 {
 	std::vector<CHAR> mask = CreateMask(signatureString);
 	std::vector<BYTE> signature = CreateSignature(signatureString);
@@ -93,7 +93,7 @@ std::vector<CHAR> ms::Scan::CreateMask(std::string signatureString)
 	return mask;
 }
 
-std::vector<BYTE> ms::Scan::CreateSignature(std::string signatureString)
+std::vector<BYTE> ms::Scan::CreateSignature(const std::string signatureString)
 {
 	return StringToBytes(ReplaceString(signatureString, "?", "0"));
 }

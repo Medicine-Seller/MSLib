@@ -46,12 +46,12 @@ namespace ms
 		};
 
 		static NTSTATUS Attach(PatchInfo& info);
-		static NTSTATUS Attach(PatchInfoAOB& info, Scan::STOP_CONDITION patchType = Scan::STOP_CONDITION::FIRST_RESULT);
-		static NTSTATUS Attach(PatchInfoAOBString& info, Scan::STOP_CONDITION patchType = Scan::STOP_CONDITION::FIRST_RESULT);
+		static NTSTATUS Attach(PatchInfoAOB& info, const Scan::STOP_CONDITION patchType = Scan::STOP_CONDITION::FIRST_RESULT);
+		static NTSTATUS Attach(PatchInfoAOBString& info, const Scan::STOP_CONDITION patchType = Scan::STOP_CONDITION::FIRST_RESULT);
 		static NTSTATUS Detach(PatchInfo& info);
 		static NTSTATUS Detach(PatchAOBBase& info);
-		static NTSTATUS PatchBytes(PVOID destination, std::vector<BYTE>* patchBytes, std::vector<BYTE>* originalBytes);
-		static NTSTATUS PatchBytes(PVOID destination, PVOID source, SIZE_T size, std::vector<BYTE>* originalBytes);
+		static NTSTATUS PatchBytes(const PVOID destination, const std::vector<BYTE>* patchBytes, std::vector<BYTE>* originalBytes);
+		static NTSTATUS PatchBytes(const PVOID destination, const PVOID source, const SIZE_T size, std::vector<BYTE>* originalBytes);
 	};
 }
 
