@@ -56,6 +56,7 @@
     <ClInclude Include="include\Scan.h" />
     <ClInclude Include="include\Thread.h" />
     <ClInclude Include="include\Util.h" />
+    <ClInclude Include="include\UtilTemplates.h" />
     <ClInclude Include="include\VirtualProtect.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

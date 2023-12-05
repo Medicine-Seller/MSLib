@@ -105,3 +105,13 @@ PVOID ms::AllocateMemoryNearAddress(const PVOID address, const SIZE_T size)
 
 	return allocatedAddress;
 }
+
+std::string ms::GetConstantString(const ULONGLONG value)
+{
+	if (ConstantMap.find(value) != ConstantMap.end())
+		return ConstantMap.at(value);
+
+	std::stringstream ss;
+	ss << std::hex << value;
+	return ss.str();
+}
