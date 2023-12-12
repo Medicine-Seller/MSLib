@@ -6,11 +6,11 @@
 NTSTATUS ms::NtAPI::GetVirtualMemoryInfoEx(const HANDLE processHandle, const PVOID baseAddress, MEMORY_BASIC_INFORMATION* mbi)
 {
     if (!mbi)
-        return STATUS_INTERNAL_ERROR;
+        return STATUS_UNSUCCESSFUL;
 
     auto NtQueryVirtualMemory = GetProcedure<NtQueryVirtualMemory_t>("ntdll.dll", "NtQueryVirtualMemory");
     if (!NtQueryVirtualMemory)
-        return STATUS_INTERNAL_ERROR;
+        return STATUS_UNSUCCESSFUL;
 
     NTSTATUS status = NtQueryVirtualMemory(processHandle, baseAddress, MemoryBasicInformation, mbi, sizeof(*mbi), NULL);
 
@@ -26,7 +26,7 @@ NTSTATUS ms::NtAPI::QuerySystemInformation(const SYSTEM_INFORMATION_CLASS system
 {
     auto NtQuerySystemInformation = GetProcedure<NtQuerySystemInformation_t>("ntdll.dll", "NtQuerySystemInformation");
     if (!NtQuerySystemInformation)
-        return STATUS_INTERNAL_ERROR;
+        return STATUS_UNSUCCESSFUL;
 
     ULONG tempReturnLength;
     NTSTATUS status = NtQuerySystemInformation(systemInformationClass, systemInformation, systemInformationLength, &tempReturnLength);

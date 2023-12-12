@@ -27,24 +27,19 @@ const std::vector<BYTE>ms::Detour::ShellCode_Detour
 	0x41, 0x5F,										// pop r15
 };
 
-NTSTATUS ms::Detour::CreateDetour(
-	const PVOID source,
-	const PVOID destination,
-	PVOID* allocatedMemory,
-	const SIZE_T writeSize,
-	std::vector<BYTE>* originalBytes,
-	const Type jumpType)
+NTSTATUS ms::Detour::CreateDetour( const PVOID source, const PVOID destination, PVOID* allocatedMemory, const SIZE_T writeSize, std::vector<BYTE>* originalBytes, const Type jumpType)
 {
 	if (jumpType == Type::JMP_ABSOLUTE && writeSize < 14)
-		return STATUS_INTERNAL_ERROR;
+		return STATUS_UNSUCCESSFUL;
 	else if (writeSize < 5)
-		return STATUS_INTERNAL_ERROR;
+		return STATUS_UNSUCCESSFUL;
 
 	SIZE_T detourSize = ShellCode_Detour.size() + ShellCode_JumpAbsolute.size() + writeSize;
 	*allocatedMemory = AllocateMemoryNearAddress(source, detourSize);
+	
 	PVOID allocation = *allocatedMemory;
 	if (!allocation)
-		return STATUS_INTERNAL_ERROR;
+		return STATUS_UNSUCCESSFUL;
 
 	std::vector<BYTE>jmpToDetour(writeSize, 0x90);
 	if (jumpType == Type::JMP_ABSOLUTE)
@@ -75,9 +70,7 @@ NTSTATUS ms::Detour::CreateDetour(
 	PVOID detourReturnOffset = IncrementByByte(allocation, detour.size() + writeSize);
 	memcpy(detourReturnOffset, returnToOriginal.data(), returnToOriginal.size());
 
-	NTSTATUS status = Patch::PatchBytes(source, &jmpToDetour, originalBytes ? originalBytes : NULL);
-
-	return status;
+	return Patch::PatchBytes(source, &jmpToDetour, originalBytes ? originalBytes : NULL);
 }
 
 NTSTATUS ms::Detour::Attach(DetourInfo& info, Type jumpType)
@@ -133,7 +126,7 @@ NTSTATUS ms::Detour::Detach(DetourInfo& info)
 		info.IsAttached = FALSE;
 
 	if (!VirtualFree(info.AllocatedMemory, 0, MEM_RELEASE))
-		return STATUS_INTERNAL_ERROR;
+		return STATUS_UNSUCCESSFUL;
 
 	return STATUS_SUCCESS;
 }

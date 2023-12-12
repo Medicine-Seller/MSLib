@@ -7,9 +7,9 @@
 
 NTSTATUS ms::Thread::GetThreadStartAddress(const HANDLE threadHandle, PVOID* threadStartAddress)
 {
-	auto NtQueryInformationThread = NtAPI::GetProcedure<NtQueryInformationThread_t>("ntdll.dll", "NtQueryInformationThread");
+	auto NtQueryInformationThread = GetProcedure<NtQueryInformationThread_t>("ntdll.dll", "NtQueryInformationThread");
 	if (!NtQueryInformationThread)
-		return STATUS_INTERNAL_ERROR;
+		return STATUS_UNSUCCESSFUL;
 
 	PVOID startAddress;
 	NTSTATUS status = NtQueryInformationThread(threadHandle, ThreadQuerySetWin32StartAddress, &startAddress, sizeof(PVOID), NULL);
@@ -24,7 +24,7 @@ NTSTATUS ms::Thread::GetModuleThreads(PCSTR moduleName, std::vector<HANDLE>* thr
 	HMODULE module = GetModuleHandleA(moduleName);
 
 	if (!snapshot || !module)
-		return STATUS_INTERNAL_ERROR;
+		return STATUS_UNSUCCESSFUL;
 
 	THREADENTRY32 threadEntry;
 	threadEntry.dwSize = sizeof(THREADENTRY32);
@@ -32,7 +32,7 @@ NTSTATUS ms::Thread::GetModuleThreads(PCSTR moduleName, std::vector<HANDLE>* thr
 	if (!Thread32First(snapshot, &threadEntry))
 	{
 		CloseHandle(snapshot);
-		return STATUS_INTERNAL_ERROR;
+		return STATUS_UNSUCCESSFUL;
 	}
 
 	MODULEINFO modInfo = GetModuleInfo(module);

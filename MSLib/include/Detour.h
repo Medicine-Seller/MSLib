@@ -48,14 +48,7 @@ namespace ms
 			std::string ModuleString;
 		};
 
-		static NTSTATUS CreateDetour(
-			const PVOID source,
-			const PVOID destination,
-			PVOID* allocatedMemory,
-			const SIZE_T writeSize,
-			std::vector<BYTE>* originalBytes,
-			const Type jumpType = Type::JMP_RELATIVE);
-
+		static NTSTATUS CreateDetour(const PVOID source, const PVOID destination, PVOID* allocatedMemory, const SIZE_T writeSize, std::vector<BYTE>* originalBytes, const Type jumpType = Type::JMP_RELATIVE);
 		static NTSTATUS Attach(DetourInfo& info, Type jumpType = Type::JMP_RELATIVE);
 		static NTSTATUS Attach(DetourInfoAOB& info, Type jumpType = Type::JMP_RELATIVE);
 		static NTSTATUS Attach(DetourInfoAOBString& info, Type jumpType = Type::JMP_RELATIVE);

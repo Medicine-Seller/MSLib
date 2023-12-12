@@ -17,7 +17,7 @@ namespace ms
 	BOOL IsCurrentProcessActive();
 	VOID GetWindowSize(const HWND window, UINT& width, UINT& height);
 	PVOID AllocateMemoryNearAddress(const PVOID address, const SIZE_T size);
-	std::string GetConstantString(const ULONGLONG value);
+	std::string GetConstantString(const ULONG value);
 }
 
 #endif

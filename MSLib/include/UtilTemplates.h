@@ -44,6 +44,16 @@ namespace ms
 		return ss.str();
 	}
 
+	template <typename FunctionPointer>
+	static FunctionPointer GetProcedure(PCSTR moduleName, PCSTR procedureName)
+	{
+		HMODULE module = GetModuleHandleA(moduleName);
+		if (!module)
+			return 0;
+
+		FunctionPointer functionPtr = (FunctionPointer)GetProcAddress(module, procedureName);
+		return functionPtr;
+	}
 }
 
 #endif

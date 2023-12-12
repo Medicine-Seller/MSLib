@@ -60,9 +60,9 @@ VOID ms::VirtualProtect::RestoreAllWritables()
 
 NTSTATUS ms::VirtualProtect::SetProtectVirtualMemoryEx(const HANDLE processHandle, PVOID baseAddress, SIZE_T regionSize, const ULONG newProtect, ULONG* oldProtect)
 {
-	auto NtProtectVirtualMemory = NtAPI::GetProcedure<NtProtectVirtualMemory_t>("ntdll.dll", "NtProtectVirtualMemory");
+	auto NtProtectVirtualMemory = GetProcedure<NtProtectVirtualMemory_t>("ntdll.dll", "NtProtectVirtualMemory");
 	if (!NtProtectVirtualMemory)
-		return STATUS_INTERNAL_ERROR;
+		return STATUS_UNSUCCESSFUL;
 
 	ULONG tempOldProtect;
 	NTSTATUS status = NtProtectVirtualMemory(processHandle, &baseAddress, &regionSize, newProtect, &tempOldProtect);

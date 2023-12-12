@@ -55,7 +55,7 @@ NTSTATUS ms::Patch::Attach(PatchInfoAOB& info, const Scan::STOP_CONDITION stopCo
 		info.DestinationList = Scan::AOBScan(info.Signature, info.Mask, info.Module, modInfo.SizeOfImage, stopCondition);
 
 		if (info.DestinationList.empty())
-			return STATUS_INTERNAL_ERROR;
+			return STATUS_UNSUCCESSFUL;
 
 		for (auto& e : info.DestinationList)
 		{

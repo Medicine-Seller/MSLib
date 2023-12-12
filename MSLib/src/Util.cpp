@@ -9,7 +9,7 @@ std::string ms::ReplaceString(std::string str, std::string findString, std::stri
 	return str;
 }
 
-std::vector<BYTE>ms::StringToBytes(const std::string bytesString)
+std::vector<BYTE> ms::StringToBytes(const std::string bytesString)
 {
 	std::istringstream iss(bytesString);
 	std::vector<BYTE> bytes;
@@ -106,7 +106,7 @@ PVOID ms::AllocateMemoryNearAddress(const PVOID address, const SIZE_T size)
 	return allocatedAddress;
 }
 
-std::string ms::GetConstantString(const ULONGLONG value)
+std::string ms::GetConstantString(const ULONG value)
 {
 	if (ConstantMap.find(value) != ConstantMap.end())
 		return ConstantMap.at(value);
