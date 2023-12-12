@@ -1,14 +1,12 @@
 # MSLib
 
-C++ Windows x64 Library
+C++ Windows x64 Memory Library
 
 ##
-Functionality:
-* Allocate Console
-* Detouring to x64 assembly
-* Patching bytes
-* Save/Restore/Clear registers
-* AOB scan
-* Scan module threads
-* Suspend/Resume/Terminate thread
-* Overwrite memory protection
+Main Functionality:
+* Signature scanning
+* Detouring to assembly
+* Byte patching
+* Retrieving & restoring registers
+* Thread suspension/termination
+* Virtual protect overwrite
