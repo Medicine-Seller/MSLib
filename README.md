@@ -8,5 +8,5 @@ C++ Windows Memory Library x64
 * Detouring
 * Byte patching
 * Retrieving & restoring registers
-* Thread suspension/termination
+* Thread manipulation
 * Virtual protect overwrite
