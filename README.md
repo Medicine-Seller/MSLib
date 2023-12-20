@@ -1,12 +1,12 @@
 # MSLib
 
-C++ Windows x64 Memory Library
+C++ Windows Memory Library x64
 
 ##
-Main Functionality:
+**Main Functionality**:
 * Signature scanning
-* Detouring to assembly
+* Detouring
 * Byte patching
 * Retrieving & restoring registers
-* Thread suspension/termination
+* Thread manipulation
 * Virtual protect overwrite
