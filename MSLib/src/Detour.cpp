@@ -76,7 +76,7 @@ NTSTATUS ms::Detour::CreateDetour( const PVOID source, const PVOID destination, 
 NTSTATUS ms::Detour::Attach(DetourInfo& info, Type jumpType)
 {
 	if (info.IsAttached)
-		return STATUS_SUCCESS;
+		return STATUS_UNSUCCESSFUL;
 
 	NTSTATUS status = CreateDetour(info.Source, info.Destination, &info.AllocatedMemory, info.WriteSize, &info.OriginalBytes, jumpType);
 	if (SUCCEEDED(status))
@@ -93,7 +93,7 @@ NTSTATUS ms::Detour::Attach(DetourInfoAOB& info, Type jumpType)
 
 		std::vector<PVOID> addressResults = Scan::AOBScan(info.Signature, info.Mask, info.Module, modInfo.SizeOfImage, Scan::STOP_CONDITION::FIRST_RESULT);
 		if (addressResults.empty())
-			return STATUS_SUCCESS;
+			return STATUS_UNSUCCESSFUL;
 
 		uintptr_t* adjustedAddress = reinterpret_cast<uintptr_t*>(IncrementByByte(addressResults[0], info.Offset));
 		info.Source = reinterpret_cast<PVOID>(adjustedAddress);
@@ -119,7 +119,7 @@ NTSTATUS ms::Detour::Attach(DetourInfoAOBString& info, Type jumpType)
 NTSTATUS ms::Detour::Detach(DetourInfo& info)
 {
 	if (!info.IsAttached)
-		return STATUS_SUCCESS;
+		return STATUS_UNSUCCESSFUL;
 
 	NTSTATUS status = Patch::PatchBytes(info.Source, &info.OriginalBytes, nullptr);
 	if (SUCCEEDED(status))
