@@ -8,7 +8,6 @@ namespace ms
 	void Log(const std::string fileDirectory, const unsigned int line, const char* format, ...);
 }
 
-#define LogLine(x, ...) ms::Log(__FILE__, __LINE__, x, __VA_ARGS__);
-#define LogFunction(x, ...) printf("%s: " x, __FUNCTION__, __VA_ARGS__)
+#define LOG_LINE(...) ms::Log(__FILE__, __LINE__, __VA_ARGS__)
 
 #endif
