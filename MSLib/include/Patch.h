@@ -15,7 +15,7 @@ namespace ms
 		struct PatchAOBBase
 		{
 			std::vector<BYTE> PatchBytes;
-			LONG Offset;
+			LONG Offset = 0;
 			BOOL IsAttached = FALSE;
 			std::vector<PVOID> DestinationList;
 			std::vector<std::vector<BYTE>> OriginalBytesList;
@@ -25,7 +25,7 @@ namespace ms
 
 		struct PatchInfo
 		{
-			PVOID Destination;
+			PVOID Destination = 0;
 			std::vector<BYTE> WriteBytes;
 			BOOL IsAttached = FALSE;
 			std::vector<BYTE> OriginalBytes;
@@ -35,7 +35,7 @@ namespace ms
 		{
 			std::vector<BYTE> Signature;
 			std::vector<CHAR> Mask;
-			PVOID Module;
+			PVOID Module = 0;
 		};
 
 		struct PatchInfoAOBString : PatchInfoAOB

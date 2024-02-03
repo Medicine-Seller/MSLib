@@ -25,11 +25,11 @@ namespace ms
 
 		struct DetourInfo
 		{
-			std::string Name;
-			PVOID Source;
-			PVOID Destination;
-			PVOID AllocatedMemory;
-			SIZE_T WriteSize;
+			std::string Name = "";
+			PVOID Source = 0;
+			PVOID Destination = 0;
+			PVOID AllocatedMemory = 0;
+			SIZE_T WriteSize = 0;
 			BOOL IsAttached = FALSE;
 			std::vector<BYTE> OriginalBytes;
 		};
@@ -38,7 +38,7 @@ namespace ms
 		{
 			std::vector<BYTE> Signature;
 			std::vector<CHAR> Mask;
-			PVOID Module;
+			PVOID Module = 0;
 			LONG Offset = 0;
 		};
 
